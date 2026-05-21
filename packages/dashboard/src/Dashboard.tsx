@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "./supabase";
 import { api, type Overview, type SpendSummary } from "./api";
+import type { UserProfile } from "./auth";
 
 const STATUS_COLOR: Record<string, string> = {
   ok: "#22c55e", warning: "#f59e0b", critical: "#ef4444", blocked: "#7c3aed",
@@ -47,8 +48,9 @@ function SpendBar({ pct, status }: { pct: number; status: string }) {
   );
 }
 
-export default function Dashboard() {
-  const [tab, setTab] = useState<"overview" | "engineers">("overview");
+export default function Dashboard({ profile }: { profile: UserProfile }) {
+  type Tab = "overview" | "engineers";
+  const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
   const [engineers, setEngineers] = useState<SpendSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,6 +123,17 @@ export default function Dashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 6, padding: "4px 12px",
+            borderRadius: 6, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.3)",
+            fontSize: 10, color: "#818cf8", fontWeight: 600, letterSpacing: "0.05em",
+            textTransform: "uppercase",
+          }}>
+            {profile.email}
+            <span style={{ color: profile.role === "admin" ? "#22c55e" : "#f59e0b", marginLeft: 4 }}>
+              ({profile.role})
+            </span>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6, padding: "4px 12px",
             borderRadius: 6, background: "#0f1628", border: "1px solid #1e2332",
             fontSize: 11, color: proxyStatus === "online" ? "#22c55e" : proxyStatus === "offline" ? "#ef4444" : "#64748b",
           }}>
@@ -141,7 +154,7 @@ export default function Dashboard() {
 
       {/* Tabs */}
       <div style={{ padding: "0 32px", borderBottom: "1px solid #1e2332", display: "flex", gap: 0 }}>
-        {(["overview", "engineers"] as const).map((t) => (
+        {(["overview", ...(profile.role === "admin" ? (["engineers"] as Tab[]) : [])] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             background: "none", border: "none", padding: "14px 20px",
             fontSize: 12, fontWeight: 600, letterSpacing: "0.06em",
@@ -179,7 +192,7 @@ export default function Dashboard() {
           </div>
         )}
         {overview && tab === "overview" && <OverviewTab overview={overview} />}
-        {engineers.length > 0 && tab === "engineers" && <EngineersTab engineers={engineers} />}
+        {profile.role === "admin" && engineers.length > 0 && tab === "engineers" && <EngineersTab engineers={engineers} />}
       </main>
     </div>
   );
