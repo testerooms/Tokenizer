@@ -1,52 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  AlertTriangle, Shield, DollarSign, Users, Ban, CheckCircle, Clock, Activity,
+  AlertTriangle, Shield, DollarSign, Users, Ban, CheckCircle, Clock, Activity, WifiOff,
 } from "lucide-react";
 import { supabase } from "./supabase";
-
-interface SpendSummary {
-  engineerId: string; engineerName: string; team: string; tier: string;
-  currentMonthCostUSD: number; softLimitUSD: number; hardLimitUSD: number;
-  utilizationPct: number; status: string; totalRequests: number;
-  avgCostPerRequest: number; topModel: string;
-}
-
-interface Overview {
-  totalSpentUSD: number; totalEngineers: number; activeEngineers: number;
-  blockedEngineers: number; warningEngineers: number; teamCount: number;
-  trend: { date: string; totalCost: number }[];
-  topSpenders: SpendSummary[];
-}
-
-const mockOverview: Overview = {
-  totalSpentUSD: 12847.5,
-  totalEngineers: 47,
-  activeEngineers: 44,
-  blockedEngineers: 3,
-  warningEngineers: 8,
-  teamCount: 4,
-  trend: Array.from({ length: 21 }, (_, i) => ({
-    date: new Date(2026, 4, i + 1).toISOString().slice(0, 10),
-    totalCost: 200 + Math.random() * 800 + i * 30,
-  })),
-  topSpenders: [
-    { engineerId: "e1", engineerName: "Alex Chen", team: "platform", tier: "power", currentMonthCostUSD: 1842, softLimitUSD: 250, hardLimitUSD: 800, utilizationPct: 230, status: "blocked", totalRequests: 3241, avgCostPerRequest: 0.57, topModel: "claude-opus-4-5" },
-    { engineerId: "e2", engineerName: "Priya Sharma", team: "platform", tier: "power", currentMonthCostUSD: 1204, softLimitUSD: 250, hardLimitUSD: 800, utilizationPct: 150, status: "critical", totalRequests: 2890, avgCostPerRequest: 0.42, topModel: "claude-sonnet-4-5" },
-    { engineerId: "e3", engineerName: "Marcus Lee", team: "default", tier: "standard", currentMonthCostUSD: 489, softLimitUSD: 150, hardLimitUSD: 500, utilizationPct: 97, status: "critical", totalRequests: 1203, avgCostPerRequest: 0.41, topModel: "claude-sonnet-4-5" },
-    { engineerId: "e4", engineerName: "Sarah Kim", team: "frontend", tier: "standard", currentMonthCostUSD: 287, softLimitUSD: 100, hardLimitUSD: 300, utilizationPct: 95, status: "warning", totalRequests: 980, avgCostPerRequest: 0.29, topModel: "claude-haiku-4-5" },
-    { engineerId: "e5", engineerName: "Daniel Wu", team: "platform", tier: "standard", currentMonthCostUSD: 201, softLimitUSD: 250, hardLimitUSD: 800, utilizationPct: 25, status: "ok", totalRequests: 654, avgCostPerRequest: 0.31, topModel: "claude-sonnet-4-5" },
-  ],
-};
-
-const mockEngineers: SpendSummary[] = [
-  ...mockOverview.topSpenders,
-  { engineerId: "e6", engineerName: "Nina Patel", team: "default", tier: "standard", currentMonthCostUSD: 145, softLimitUSD: 150, hardLimitUSD: 500, utilizationPct: 29, status: "ok", totalRequests: 521, avgCostPerRequest: 0.28, topModel: "claude-haiku-4-5" },
-  { engineerId: "e7", engineerName: "James Torres", team: "frontend", tier: "restricted", currentMonthCostUSD: 62, softLimitUSD: 25, hardLimitUSD: 75, utilizationPct: 82, status: "warning", totalRequests: 340, avgCostPerRequest: 0.18, topModel: "claude-haiku-4-5" },
-  { engineerId: "e8", engineerName: "Aisha Rahman", team: "platform", tier: "power", currentMonthCostUSD: 178, softLimitUSD: 250, hardLimitUSD: 800, utilizationPct: 22, status: "ok", totalRequests: 489, avgCostPerRequest: 0.36, topModel: "claude-sonnet-4-5" },
-];
+import { api, type Overview, type SpendSummary } from "./api";
 
 const STATUS_COLOR: Record<string, string> = {
   ok: "#22c55e", warning: "#f59e0b", critical: "#ef4444", blocked: "#7c3aed",
@@ -89,8 +49,37 @@ function SpendBar({ pct, status }: { pct: number; status: string }) {
 
 export default function Dashboard() {
   const [tab, setTab] = useState<"overview" | "engineers">("overview");
-  const overview = mockOverview;
-  const engineers = mockEngineers;
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [engineers, setEngineers] = useState<SpendSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [proxyStatus, setProxyStatus] = useState<"checking" | "online" | "offline">("checking");
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [ov, eng] = await Promise.all([
+        api.getOverview(),
+        api.getEngineers(),
+      ]);
+      setOverview(ov);
+      setEngineers(eng);
+      setProxyStatus("online");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch data";
+      setError(message);
+      setProxyStatus("offline");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -133,10 +122,10 @@ export default function Dashboard() {
           <div style={{
             display: "flex", alignItems: "center", gap: 6, padding: "4px 12px",
             borderRadius: 6, background: "#0f1628", border: "1px solid #1e2332",
-            fontSize: 11, color: "#64748b",
+            fontSize: 11, color: proxyStatus === "online" ? "#22c55e" : proxyStatus === "offline" ? "#ef4444" : "#64748b",
           }}>
-            <Activity size={10} color="#22c55e" />
-            PROXY ACTIVE
+            {proxyStatus === "online" ? <Activity size={10} color="#22c55e" /> : <WifiOff size={10} color={proxyStatus === "offline" ? "#ef4444" : "#64748b"} />}
+            {proxyStatus === "online" ? "PROXY ACTIVE" : proxyStatus === "offline" ? "PROXY OFFLINE" : "CHECKING..."}
           </div>
           <button onClick={handleLogout} style={{
             background: "transparent",
@@ -166,8 +155,31 @@ export default function Dashboard() {
       </div>
 
       <main style={{ padding: "32px" }}>
-        {tab === "overview" && <OverviewTab overview={overview} />}
-        {tab === "engineers" && <EngineersTab engineers={engineers} />}
+        {loading && !overview && (
+          <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", fontSize: 13 }}>
+            <Activity size={24} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
+            Loading dashboard data...
+          </div>
+        )}
+        {error && !loading && (
+          <div style={{
+            textAlign: "center", padding: "80px 20px", color: "#ef4444", fontSize: 13,
+            background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12,
+          }}>
+            <WifiOff size={24} style={{ margin: "0 auto 12px", opacity: 0.6 }} />
+            <div style={{ marginBottom: 16, color: "#94a3b8" }}>Cannot connect to proxy server</div>
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 16 }}>{error}</div>
+            <button onClick={fetchData} style={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              border: "none", borderRadius: 8, color: "white", padding: "10px 24px",
+              fontSize: 12, fontWeight: 700, cursor: "pointer",
+            }}>
+              Retry
+            </button>
+          </div>
+        )}
+        {overview && tab === "overview" && <OverviewTab overview={overview} />}
+        {engineers.length > 0 && tab === "engineers" && <EngineersTab engineers={engineers} />}
       </main>
     </div>
   );
