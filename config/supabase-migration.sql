@@ -53,7 +53,21 @@ CREATE TRIGGER on_auth_user_email_change
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_user_email_change();
 
--- 4. Row Level Security
+-- 4. Helper function (SECURITY DEFINER bypasses RLS to avoid infinite recursion)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$;
+
+-- 5. Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own profile
@@ -63,22 +77,17 @@ CREATE POLICY "Users can read own profile"
   FOR SELECT
   USING (auth.uid() = id);
 
--- Admins can read all profiles
+-- Admins can read all profiles (uses SECURITY DEFINER helper to avoid recursion)
 DROP POLICY IF EXISTS "Admins can read all profiles" ON public.profiles;
 CREATE POLICY "Admins can read all profiles"
   ON public.profiles
   FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (public.is_admin());
 
--- 5. Grant access
+-- 6. Grant access
 GRANT ALL ON public.profiles TO authenticated;
 GRANT ALL ON public.profiles TO service_role;
 
--- 6. Seed first admin (run AFTER creating a user in the UI)
+-- 7. Seed first admin (run AFTER creating a user in the UI)
 -- Replace with your email after signing up:
 -- UPDATE public.profiles SET role = 'admin' WHERE email = 'your@email.com';
