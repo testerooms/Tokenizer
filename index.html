@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokenizer — AI Cost Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --text: #e8e8e8;
+            --muted: #666;
+            --accent: #f59e0b;
+            --accent-dim: rgba(245, 158, 11, 0.15);
+            --line: #1f1f1f;
+            --red: #dc2626;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Sora', sans-serif;
+            font-weight: 300;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ─── TOP BAR ─── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .logo {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+        .logo span { color: var(--accent); }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+        }
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* ─── HERO ─── */
+        .hero {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 4rem;
+            padding: 5rem 0 4rem;
+            align-items: start;
+        }
+
+        .hero-headline {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: clamp(2.2rem, 5vw, 4rem);
+            line-height: 1.05;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .hero-headline em {
+            font-style: normal;
+            color: var(--accent);
+            display: block;
+        }
+        .hero-sub {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            color: var(--muted);
+            max-width: 32rem;
+            line-height: 1.7;
+        }
+        .hero-cta {
+            margin-top: 2.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--accent);
+            color: #0a0a0a;
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            text-decoration: none;
+            padding: 0.9rem 2rem;
+            transition: opacity 0.2s;
+        }
+        .hero-cta:hover { opacity: 0.85; }
+
+        .hero-metric {
+            text-align: right;
+            padding-top: 0.5rem;
+        }
+        .hero-number {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: clamp(4rem, 10vw, 8rem);
+            line-height: 0.9;
+            letter-spacing: -0.04em;
+            color: var(--red);
+        }
+        .hero-number-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 0.5rem;
+        }
+        .hero-number-sub {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-top: 0.25rem;
+            font-weight: 400;
+        }
+        .hero-ref {
+            margin-top: 2rem;
+            font-size: 0.65rem;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-top: 1px solid var(--line);
+            padding-top: 1rem;
+        }
+
+        /* ─── SECTION DIVIDER ─── */
+        .section-label {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+
+        section { padding: 4rem 0; }
+        section + section { border-top: 1px solid var(--line); }
+
+        /* ─── PROBLEM ─── */
+        .problem-text {
+            font-size: 1.15rem;
+            max-width: 48rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+        }
+
+        .cost-table {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border: 1px solid var(--line);
+            font-size: 0.85rem;
+        }
+        .cost-table-header {
+            display: contents;
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .cost-table-header > div {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface);
+        }
+        .cost-table-row {
+            display: contents;
+            color: var(--muted);
+        }
+        .cost-table-row > div {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .cost-table-row:last-child > div { border-bottom: none; }
+        .cost-table-row > div:last-child {
+            font-family: 'Archivo Black', sans-serif;
+            color: var(--text);
+        }
+        .cost-table-row.danger > div:last-child { color: var(--red); }
+
+        /* ─── HOW IT WORKS ─── */
+        .flow {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            margin-top: 2rem;
+        }
+        .flow-step {
+            flex: 1;
+            position: relative;
+            padding: 1.5rem;
+            border: 1px solid var(--line);
+            border-right: none;
+        }
+        .flow-step:last-child { border-right: 1px solid var(--line); }
+        .flow-step-num {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+        .flow-step-title {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .flow-step-desc {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .flow-step + .flow-step::before {
+            content: '→';
+            position: absolute;
+            left: -0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.2rem;
+        }
+
+        /* ─── FEATURES ─── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1px;
+            background: var(--line);
+            border: 1px solid var(--line);
+            margin-top: 2rem;
+        }
+        .feature-card {
+            background: var(--bg);
+            padding: 2rem 1.5rem;
+        }
+        .feature-icon {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .feature-title {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.5rem;
+        }
+        .feature-desc {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ─── QUICK START ─── */
+        .quickstart-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+        .quickstart-desc {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .code-block {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: auto;
+        }
+        .code-block pre {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.8;
+            color: #ccc;
+        }
+        .code-block .cm { color: #555; }
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: none;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .copy-btn:hover { color: var(--text); border-color: var(--text); }
+
+        /* ─── CTA ─── */
+        .cta {
+            text-align: center;
+            padding: 5rem 0;
+            border-top: 1px solid var(--line);
+        }
+        .cta-title {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+        .cta-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            text-decoration: none;
+            padding: 0.9rem 2rem;
+            transition: opacity 0.2s;
+        }
+        .cta-btn.primary { background: var(--accent); color: #0a0a0a; }
+        .cta-btn.secondary { border: 1px solid var(--line); color: var(--text); }
+        .cta-btn:hover { opacity: 0.8; }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.7rem;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            .hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 0; }
+            .hero-metric { text-align: left; }
+            .cost-table { grid-template-columns: 1fr; }
+            .cost-table-header, .cost-table-row { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+            .flow { flex-direction: column; }
+            .flow-step { border-right: 1px solid var(--line); }
+            .flow-step + .flow-step { border-top: none; }
+            .flow-step + .flow-step::before { content: '↓'; left: 50%; top: -0.9rem; transform: translateX(-50%); }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .quickstart-layout { grid-template-columns: 1fr; }
+            .cta-actions { flex-direction: column; align-items: center; }
+        }
+        @media (max-width: 480px) {
+            .features-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <header class="topbar">
+        <div class="logo">Token<span>izer</span></div>
+        <div class="status">
+            <span class="status-dot"></span>
+            All Systems Monitored
+        </div>
+    </header>
+
+    <!-- ─── HERO ─── -->
+    <section class="hero">
+        <div>
+            <h1 class="hero-headline">
+                Your AI Bill<br>is the Next<em>Uber Story</em>
+            </h1>
+            <p class="hero-sub">
+                Token-based billing scales faster than your budget. One runaway prompt, one unmonitored team — and your monthly burn goes vertical. Tokenizer puts a hard ceiling on the spend — whether your team ships in opencode, Claude Code, or any Anthropic API client.
+            </p>
+            <a href="#quick-start" class="hero-cta">Deploy the Proxy →</a>
+        </div>
+        <div class="hero-metric">
+            <div class="hero-number">$247K</div>
+            <div class="hero-number-label">potential monthly overage<br>at 200 engineers</div>
+            <div class="hero-number-sub">without spend controls</div>
+            <div class="hero-ref">Based on 1M tokens/engineer/day at Claude 3.5 Sonnet pricing &bullet; Works with opencode, Claude Code, and any Anthropic API client</div>
+        </div>
+    </section>
+
+    <!-- ─── PROBLEM ─── -->
+    <section id="problem">
+        <div class="section-label">The Bet</div>
+        <p class="problem-text">
+            Every engineer with API access is a variable cost center. No approval flow, no budget gate, no visibility — just a growing number on next month's AWS bill. The question isn't if you'll hit a surprise, but when.
+        </p>
+        <div class="cost-table">
+            <div class="cost-table-header">
+                <div>Engineers</div>
+                <div>Tier</div>
+                <div>Monthly Burn</div>
+            </div>
+            <div class="cost-table-row">
+                <div>10</div>
+                <div>Pilot</div>
+                <div>$3,200</div>
+            </div>
+            <div class="cost-table-row">
+                <div>50</div>
+                <div>Team</div>
+                <div>$16,000</div>
+            </div>
+            <div class="cost-table-row">
+                <div>200</div>
+                <div>Organization</div>
+                <div>$64,000</div>
+            </div>
+            <div class="cost-table-row danger">
+                <div>200</div>
+                <div>Unmonitored</div>
+                <div>$247,000</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── HOW IT WORKS ─── -->
+    <section id="how-it-works">
+        <div class="section-label">Architecture</div>
+        <div class="flow">
+            <div class="flow-step">
+                <div class="flow-step-num">01</div>
+                <div class="flow-step-title">Intercept</div>
+                <div class="flow-step-desc">Requests from opencode, Claude Code, or any API client route through the proxy instead of directly to api.anthropic.com.</div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-step-num">02</div>
+                <div class="flow-step-title">Enforce</div>
+                <div class="flow-step-desc">Policy engine checks budget &mdash; blocks, warns, or allows based on hard and soft limits.</div>
+            </div>
+            <div class="flow-step">
+                <div class="flow-step-num">03</div>
+                <div class="flow-step-title">Record</div>
+                <div class="flow-step-desc">Every token spent is logged against the engineer, team, and model in real time.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── FEATURES ─── -->
+    <section id="features">
+        <div class="section-label">Capabilities</div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">⌖</span>
+                <div class="feature-title">Hard Limits</div>
+                <div class="feature-desc">Automatic 429 when spend crosses the line. No exceptions, no surprises.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">▦</span>
+                <div class="feature-title">Per-Engineer Budgets</div>
+                <div class="feature-desc">Different tiers for different roles. Assign soft and hard caps per developer.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">◉</span>
+                <div class="feature-title">Real-time Tracking</div>
+                <div class="feature-desc">Live spend per engineer, team, and model — exposed via API and dashboard.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⊞</span>
+                <div class="feature-title">Team Policies</div>
+                <div class="feature-desc">Set budgets per team. Different orgs, different constraints, one proxy.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⏚</span>
+                <div class="feature-title">Alert Thresholds</div>
+                <div class="feature-desc">Warnings at 50%, 80%, 95% — so you act before the block hits.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">↗</span>
+                <div class="feature-title">Usage Analytics</div>
+                <div class="feature-desc">Trends, top spenders, model mix — all queryable from the metrics API.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── QUICK START ─── -->
+    <section id="quick-start">
+        <div class="section-label">Onboard</div>
+        <div class="quickstart-layout">
+            <div>
+                <p class="quickstart-desc">
+                    Clone, install, configure. The proxy runs as a standalone Node.js service on your infrastructure. Point opencode or Claude Code at <code style="color:var(--accent)">localhost:3001</code> and the whole team is guarded — paid models included.
+                </p>
+                <p class="quickstart-desc" style="margin-top:1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:#555;">
+                    Requires Node 18+ and an Anthropic API key.
+                </p>
+            </div>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre><span class="cm"># clone & install</span>
+git clone https://github.com/your-org/tokenizer
+cd tokenizer/packages/proxy
+npm install && npm run build
+
+<span class="cm"># configure & run</span>
+export ANTHROPIC_API_KEY="sk-ant-..."
+npm start</pre>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- ─── CTA ─── -->
+<section class="cta">
+    <div class="container">
+                <div class="cta-title">Stop guessing. Start guarding.</div>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:1rem">Works with opencode, Claude Code &mdash; any tool targeting the Anthropic API.</p>
+        <div class="cta-actions">
+            <a href="#" class="cta-btn primary">View on GitHub →</a>
+            <a href="#" class="cta-btn secondary">Dashboard (Coming Soon)</a>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">Tokenizer &mdash; 2026</div>
+</footer>
+
+<script>
+function copyCode(btn) {
+    const pre = btn.nextElementSibling;
+    const txt = pre.textContent.replace(/^\s+|\s+$/g, '');
+    navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+}
+</script>
+
+</body>
+</html>

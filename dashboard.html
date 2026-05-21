@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tokenizer — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--surface:#141414;--text:#e8e8e8;--muted:#666;--accent:#f59e0b;--accent-dim:rgba(245,158,11,0.12);--line:#1f1f1f;--red:#dc2626;--green:#22c55e;--radius:0}
+body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.hidden{display:none!important}
+.container{width:100%;max-width:1200px;padding:2rem;margin:0 auto}
+
+/* ── Login ── */
+.login-wrap{width:100%;max-width:400px;margin:0 auto}
+.login-box{background:var(--surface);border:1px solid var(--line);padding:2.5rem}
+.login-logo{font-family:'Archivo Black',sans-serif;font-size:1.3rem;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.5rem;text-align:center}
+.login-logo span{color:var(--accent)}
+.login-sub{font-size:0.75rem;color:var(--muted);text-align:center;margin-bottom:2rem;text-transform:uppercase;letter-spacing:0.08em}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem}
+.form-group input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:0.7rem 0.8rem;font-family:'Sora',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.2s}
+.form-group input:focus{border-color:var(--accent)}
+.btn{background:var(--accent);color:#0a0a0a;border:none;padding:0.75rem 1.5rem;font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s;width:100%}
+.btn:hover{opacity:0.85}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--line);color:var(--text)}
+.login-error{color:var(--red);font-size:0.8rem;margin-top:0.75rem;display:none}
+.login-error.show{display:block}
+
+/* ── Dashboard ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:1.5rem;border-bottom:1px solid var(--line);margin-bottom:2rem}
+.topbar-logo{font-family:'Archivo Black',sans-serif;font-size:1rem;text-transform:uppercase;letter-spacing:0.12em}
+.topbar-logo span{color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.topbar-user{font-size:0.75rem;color:var(--muted)}
+.topbar-role{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;border:1px solid var(--accent);color:var(--accent);padding:0.15rem 0.5rem}
+.btn-logout{background:none;border:1px solid var(--line);color:var(--muted);font-family:'Sora',sans-serif;font-size:0.7rem;padding:0.4rem 0.8rem;cursor:pointer;transition:color 0.2s,border-color 0.2s}
+.btn-logout:hover{color:var(--text);border-color:var(--text)}
+h2{font-family:'Archivo Black',sans-serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--accent);margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem}
+h2::after{content:'';flex:1;height:1px;background:var(--line)}
+
+/* Stats row */
+.row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;margin-bottom:2rem;border:1px solid var(--line)}
+.stat{background:var(--bg);padding:1.25rem 1.5rem}
+.stat-num{font-family:'Archivo Black',sans-serif;font-size:1.8rem;line-height:1.2}
+.stat-num.live{color:var(--green)}
+.stat-num.offline{color:var(--muted)}
+.stat-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.25rem}
+.stat-sub{font-size:0.6rem;color:#444;margin-top:0.2rem}
+
+/* Grid layout */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:2rem;border:1px solid var(--line)}
+.card{background:var(--bg);padding:1.5rem}
+.card-full{background:var(--bg);padding:1.5rem;border:1px solid var(--line);margin-bottom:2rem}
+
+/* Form within dashboard */
+.form-group textarea{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:0.65rem 0.8rem;font-family:'Sora',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.2s;resize:vertical;min-height:60px}
+.form-group textarea:focus{border-color:var(--accent)}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:0.8rem}
+th{font-family:'Archivo Black',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);text-align:left;padding:0.6rem 0.8rem;border-bottom:1px solid var(--line);font-weight:400}
+td{padding:0.6rem 0.8rem;border-bottom:1px solid var(--line);color:var(--text)}
+tr:last-child td{border-bottom:none}
+.tag{display:inline-block;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.15rem 0.5rem;border:1px solid var(--line)}
+.tag.admin{border-color:var(--accent);color:var(--accent)}
+.tag.manager{border-color:var(--green);color:var(--green)}
+.tag.engineer{border-color:var(--muted);color:var(--muted)}
+.bar-wrap{display:flex;align-items:center;gap:0.5rem}
+.bar{height:4px;background:var(--surface);flex:1;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);transition:width 0.3s}
+.bar-fill.warn{background:var(--red)}
+.status-ok{color:var(--green)}
+.status-warn{color:var(--accent)}
+.status-critical{color:var(--red)}
+.message{padding:0.8rem 1rem;margin:0.75rem 0;font-size:0.8rem;display:none}
+.message.ok{display:block;background:var(--accent-dim);border:1px solid var(--accent)}
+.message.err{display:block;background:rgba(220,38,38,0.1);border:1px solid var(--red);color:var(--red)}
+.empty{color:var(--muted);font-size:0.8rem;padding:1rem 0}
+
+/* Connection badge */
+.conn-status{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.3rem 0.7rem;border:1px solid var(--line)}
+.conn-dot{width:5px;height:5px;border-radius:50%}
+.conn-dot.live{background:var(--green);animation:pulse 2s infinite}
+.conn-dot.offline{background:var(--muted)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* Sidecar section */
+.sidecar-prompt{background:var(--surface);border:1px solid var(--line);padding:2rem;text-align:center;margin:1rem 0}
+.sidecar-prompt p{font-size:0.85rem;color:var(--muted);margin-bottom:1rem}
+.sidecar-prompt code{background:var(--bg);padding:0.2rem 0.5rem;font-size:0.8rem;color:var(--accent)}
+
+.scroll-x{overflow-x:auto}
+
+@media(max-width:768px){.row{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN VIEW ═══════ -->
+<div id="login-view" class="container">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">Token<span>izer</span></div>
+      <div class="login-sub">Admin Dashboard</div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="admin@company.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
+      </div>
+      <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ DASHBOARD VIEW ═══════ -->
+<div id="dash-view" class="container hidden">
+  <div class="topbar">
+    <div class="topbar-logo">Token<span>izer</span></div>
+    <div class="topbar-right">
+      <span class="conn-status" id="conn-badge"><span class="conn-dot offline"></span> Sidecar Offline</span>
+      <span class="topbar-user" id="dash-user"></span>
+      <span class="topbar-role" id="dash-role">admin</span>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="row" id="stats-row"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Allocate Tokens</h2>
+      <div id="form-msg" class="message"></div>
+      <div class="form-group">
+        <label>Engineer Email</label>
+        <input type="email" id="alloc-email" placeholder="engineer@company.com">
+      </div>
+      <div class="form-group">
+        <label>Tokens</label>
+        <input type="number" id="alloc-tokens" placeholder="500000" min="1">
+      </div>
+      <div class="form-group">
+        <label>Budget (USD)</label>
+        <input type="number" id="alloc-budget" placeholder="25.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Note</label>
+        <textarea id="alloc-note" placeholder="Q3 budget"></textarea>
+      </div>
+      <button class="btn" id="alloc-btn" onclick="handleAllocate()">Allocate →</button>
+    </div>
+    <div class="card">
+      <h2>Engineers</h2>
+      <div id="engineers-tbl"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+
+  <h2>Allocation History</h2>
+  <div id="allocs-tbl"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+// ── Auth ──
+const AUTH_KEY = "tokenizer_session";
+const CREDENTIALS = {
+  email: "admin@tokenizer.io",
+  password: "admin123",
+};
+
+function isAuthenticated() {
+  const s = sessionStorage.getItem(AUTH_KEY);
+  if (!s) return false;
+  try { const d = JSON.parse(s); return d.email && d.expires > Date.now(); } catch { return false; }
+}
+
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem(AUTH_KEY)); } catch { return null; }
+}
+
+function handleLogin() {
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errEl = document.getElementById("login-error");
+  const btn = document.getElementById("login-btn");
+
+  if (!email || !password) {
+    errEl.textContent = "Email and password required.";
+    errEl.classList.add("show"); return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Authenticating...";
+
+  setTimeout(() => {
+    if (email === CREDENTIALS.email && password === CREDENTIALS.password) {
+      const session = { email, role: "admin", expires: Date.now() + 8 * 60 * 60 * 1000 };
+      sessionStorage.setItem(AUTH_KEY, JSON.stringify(session));
+      showDashboard();
+    } else {
+      errEl.textContent = "Invalid credentials. Try admin@tokenizer.io / admin123";
+      errEl.classList.add("show");
+      btn.disabled = false;
+      btn.textContent = "Sign In";
+    }
+  }, 800);
+}
+
+function handleLogout() {
+  sessionStorage.removeItem(AUTH_KEY);
+  showLogin();
+}
+
+// ── Views ──
+function showLogin() {
+  document.getElementById("login-view").classList.remove("hidden");
+  document.getElementById("dash-view").classList.add("hidden");
+  document.getElementById("login-email").value = "";
+  document.getElementById("login-password").value = "";
+  document.getElementById("login-error").classList.remove("show");
+  document.getElementById("login-btn").disabled = false;
+  document.getElementById("login-btn").textContent = "Sign In";
+}
+
+function showDashboard() {
+  document.getElementById("login-view").classList.add("hidden");
+  document.getElementById("dash-view").classList.remove("hidden");
+  const s = getSession();
+  if (s) {
+    document.getElementById("dash-user").textContent = s.email;
+    document.getElementById("dash-role").textContent = s.role;
+  }
+  checkSidecar();
+  loadData();
+}
+
+// ── Sidecar connection ──
+const SIDECAR_URL = "http://127.0.0.1:3081";
+
+async function checkSidecar() {
+  const badge = document.getElementById("conn-badge");
+  const dot = badge.querySelector(".conn-dot");
+  try {
+    const res = await fetch(`${SIDECAR_URL}/api/stats`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      dot.className = "conn-dot live";
+      badge.innerHTML = '<span class="conn-dot live"></span> Sidecar Live';
+      return true;
+    }
+  } catch {}
+  dot.className = "conn-dot offline";
+  badge.innerHTML = '<span class="conn-dot offline"></span> Sidecar Offline';
+  return false;
+}
+
+async function sidecarFetch(path, opts = {}) {
+  try {
+    const res = await fetch(`${SIDECAR_URL}${path}`, {
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(3000),
+      ...opts,
+    });
+    if (res.ok) return res.json();
+  } catch {}
+  return null;
+}
+
+// ── Demo data ──
+const DEMO = {
+  stats: { totalToday: 2.02, activeEngineers: 3, totalEngineers: 6, totalAllocated: 25, totalTokensAllocated: 500000, totalAllocations: 1, totalTeams: 3 },
+  engineers: [
+    { id: "alice", email: "alice@company.com", role: "admin", team_id: "platform", daily_budget_usd: 0, todaySpent: 0.906, todayTokens: 54000 },
+    { id: "bob", email: "bob@company.com", role: "manager", team_id: "platform", daily_budget_usd: 15, todaySpent: 0.195, todayTokens: 17000 },
+    { id: "charlie", email: "charlie@company.com", role: "engineer", team_id: "ml", daily_budget_usd: 25, todaySpent: 0.915, todayTokens: 65000 },
+    { id: "diana", email: "diana@company.com", role: "engineer", team_id: "ml", daily_budget_usd: 50, todaySpent: 1.125, todayTokens: 35000 },
+    { id: "eve", email: "eve@company.com", role: "engineer", team_id: "ml", daily_budget_usd: 35, todaySpent: 1.266, todayTokens: 98000 },
+    { id: "frank", email: "frank@company.com", role: "engineer", team_id: "sales", daily_budget_usd: 3, todaySpent: 0.022, todayTokens: 7000 },
+  ],
+  allocations: [
+    { id: 1, engineer_email: "charlie@company.com", tokens_allocated: 500000, budget_usd: 25, allocated_by: "admin", note: "Q3 ML research", created_at: "2026-05-21T09:24:57" },
+    { id: 2, engineer_email: "diana@company.com", tokens_allocated: 1000000, budget_usd: 50, allocated_by: "admin", note: "Opus model budget", created_at: "2026-05-20T14:00:00" },
+    { id: 3, engineer_email: "frank@company.com", tokens_allocated: 100000, budget_usd: 3, allocated_by: "manager", note: "Sales assistant", created_at: "2026-05-19T10:30:00" },
+  ],
+};
+
+// ── Data loading ──
+async function loadData() {
+  loadStats();
+  loadEngineers();
+  loadAllocations();
+}
+
+async function loadStats() {
+  const data = await sidecarFetch("/api/stats") || DEMO.stats;
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat"><div class="stat-num">$${data.totalToday.toFixed(2)}</div><div class="stat-label">Spent Today</div></div>
+    <div class="stat"><div class="stat-num">${data.activeEngineers}</div><div class="stat-label">Active Engineers</div></div>
+    <div class="stat"><div class="stat-num">$${data.totalAllocated.toFixed(2)}</div><div class="stat-label">Total Allocated</div></div>
+    <div class="stat"><div class="stat-num">${(data.totalTokensAllocated / 1000000).toFixed(1)}M</div><div class="stat-label">Tokens Allocated</div></div>
+  `;
+}
+
+async function loadEngineers() {
+  let engs = await sidecarFetch("/api/engineers") || DEMO.engineers;
+  document.getElementById("engineers-tbl").innerHTML =
+    `<div class="scroll-x"><table>
+      <tr><th>Engineer</th><th>Role</th><th>Team</th><th>Daily</th><th>Today</th><th>Util</th></tr>
+      ${engs.map(e => {
+        const pct = e.daily_budget_usd > 0 ? ((e.todaySpent / e.daily_budget_usd) * 100) : 0;
+        const cls = pct >= 90 ? "status-critical" : pct >= 75 ? "status-warn" : "status-ok";
+        return `<tr>
+          <td>${e.id}<br><span style="font-size:0.65rem;color:var(--muted)">${e.email}</span></td>
+          <td><span class="tag ${e.role}">${e.role}</span></td>
+          <td style="color:var(--muted)">${e.team_id || "—"}</td>
+          <td>$${e.daily_budget_usd.toFixed(2)}</td>
+          <td class="${cls}">$${e.todaySpent.toFixed(4)}</td>
+          <td><span class="bar-wrap"><span class="bar"><span class="bar-fill${pct >= 90 ? ' warn' : ''}" style="width:${Math.min(pct, 100)}%"></span></span>${pct > 0 ? pct.toFixed(0) + '%' : '—'}</span></td>
+        </tr>`;
+      }).join("")}
+    </table></div>`;
+}
+
+async function loadAllocations() {
+  let allocs = await sidecarFetch("/api/allocations") || DEMO.allocations;
+  document.getElementById("allocs-tbl").innerHTML = allocs.length === 0
+    ? '<div class="empty">No allocations yet.</div>'
+    : `<div class="scroll-x"><table>
+      <tr><th>Date</th><th>Engineer</th><th>Tokens</th><th>Budget</th><th>By</th><th>Note</th></tr>
+      ${allocs.map(a => `<tr>
+        <td style="color:var(--muted)">${(a.created_at || "").slice(0, 10)}</td>
+        <td>${a.engineer_email}</td>
+        <td>${a.tokens_allocated.toLocaleString()}</td>
+        <td>$${a.budget_usd.toFixed(2)}</td>
+        <td style="color:var(--muted)">${a.allocated_by}</td>
+        <td style="color:var(--accent);font-size:0.7rem">${a.note || ""}</td>
+      </tr>`).join("")}
+    </table></div>`;
+}
+
+async function handleAllocate() {
+  const btn = document.getElementById("alloc-btn");
+  const msg = document.getElementById("form-msg");
+  const email = document.getElementById("alloc-email").value.trim();
+  const tokens = parseInt(document.getElementById("alloc-tokens").value);
+  const budget = parseFloat(document.getElementById("alloc-budget").value) || 0;
+  const note = document.getElementById("alloc-note").value.trim();
+
+  if (!email || !tokens) {
+    msg.className = "message err"; msg.textContent = "Email and tokens required."; return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Allocating...";
+
+  const live = await checkSidecar();
+  if (live) {
+    const res = await sidecarFetch("/api/allocate", {
+      method: "POST",
+      body: JSON.stringify({ email, tokens, budget, note }),
+    });
+    if (res && res.ok) {
+      msg.className = "message ok";
+      msg.textContent = `✓ ${tokens.toLocaleString()} tokens allocated to ${email}`;
+      document.getElementById("alloc-email").value = "";
+      document.getElementById("alloc-tokens").value = "";
+      document.getElementById("alloc-budget").value = "";
+      document.getElementById("alloc-note").value = "";
+      loadData();
+    } else {
+      msg.className = "message err";
+      msg.textContent = "Allocation failed. Check sidecar logs.";
+    }
+  } else {
+    msg.className = "message err";
+    msg.textContent = "Sidecar not running. Start it with: opencli dashboard";
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Allocate →";
+}
+
+// ── Init ──
+if (isAuthenticated()) showDashboard();
+else showLogin();
+</script>
+</body>
+</html>

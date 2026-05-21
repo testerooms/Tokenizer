@@ -1,0 +1,39 @@
+# Claude Cost Guardian - Budget Policy Configuration
+# All amounts in USD per calendar month
+
+teams:
+  default:
+    monthlyCapUSD: 5000
+    perEngineerSoftLimitUSD: 150    # Warning threshold
+    perEngineerHardLimitUSD: 500    # Block threshold
+    alertThresholds: [0.5, 0.8, 0.95]
+
+  platform:
+    monthlyCapUSD: 10000
+    perEngineerSoftLimitUSD: 250
+    perEngineerHardLimitUSD: 800
+    alertThresholds: [0.6, 0.85, 0.95]
+
+  frontend:
+    monthlyCapUSD: 4000
+    perEngineerSoftLimitUSD: 100
+    perEngineerHardLimitUSD: 300
+    alertThresholds: [0.5, 0.8, 0.95]
+
+# Tiers override team-level limits for individual engineers
+tiers:
+  standard:
+    multiplier: 1.0     # Default limits apply
+  power:
+    multiplier: 3.0     # Power users get 3x limits
+  restricted:
+    multiplier: 0.25    # Restricted to 25% of team limit
+
+# Global kill switch — set to true to block ALL requests org-wide
+globalEmergencyStop: false
+
+# Alert channels (configure in .env)
+alerts:
+  slack: true
+  email: true
+  webhook: false
