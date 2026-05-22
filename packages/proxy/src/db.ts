@@ -80,14 +80,6 @@ class GuardianDB {
       .prepare("SELECT * FROM engineers WHERE id = ?")
       .get(params.engineerId) as any;
 
-    if (!engineer) {
-      // Auto-register unknown engineers
-      this.db.prepare(`
-        INSERT OR IGNORE INTO engineers (id, email, name, team_id, tier)
-        VALUES (?, ?, ?, 'default', 'standard')
-      `).run(params.engineerId, `${params.engineerId}@company.com`, params.engineerId);
-    }
-
     const cost = calculateCost(
       params.model,
       params.inputTokens,
@@ -120,6 +112,11 @@ class GuardianDB {
     );
 
     return record;
+  }
+
+  engineerExists(engineerId: string): boolean {
+    const result = this.db.prepare("SELECT 1 FROM engineers WHERE id = ?").get(engineerId);
+    return !!result;
   }
 
   getEngineerSpendThisMonth(engineerId: string): number {
