@@ -14,10 +14,15 @@
 
 [[redirects]]
   from = "/"
+  to = "/landing.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
   to = "/index.html"
   status = 200
 
 [[redirects]]
-  from = "/*"
+  from = "/dashboard/*"
   to = "/index.html"
   status = 200
