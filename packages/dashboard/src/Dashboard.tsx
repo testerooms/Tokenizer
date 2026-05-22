@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  AlertTriangle, Shield, DollarSign, Users, Ban, CheckCircle, Clock, Activity, WifiOff,
+  AlertTriangle, Shield, DollarSign, Users, Ban, CheckCircle, Clock, Activity, WifiOff, BookOpen, Copy, Terminal,
 } from "lucide-react";
 import { supabase } from "./supabase";
 import { api, type Overview, type SpendSummary } from "./api";
@@ -49,7 +49,7 @@ function SpendBar({ pct, status }: { pct: number; status: string }) {
 }
 
 export default function Dashboard({ profile }: { profile: UserProfile }) {
-  type Tab = "overview" | "engineers";
+  type Tab = "overview" | "engineers" | "setup";
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
   const [engineers, setEngineers] = useState<SpendSummary[]>([]);
@@ -154,27 +154,30 @@ export default function Dashboard({ profile }: { profile: UserProfile }) {
 
       {/* Tabs */}
       <div style={{ padding: "0 32px", borderBottom: "1px solid #1e2332", display: "flex", gap: 0 }}>
-        {(["overview", ...(profile.role === "admin" ? (["engineers"] as Tab[]) : [])] as Tab[]).map((t) => (
+        {(["overview", ...(profile.role === "admin" ? (["engineers"] as Tab[]) : []), "setup"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             background: "none", border: "none", padding: "14px 20px",
             fontSize: 12, fontWeight: 600, letterSpacing: "0.06em",
             color: tab === t ? "#6366f1" : "#64748b",
             borderBottom: tab === t ? "2px solid #6366f1" : "2px solid transparent",
             cursor: "pointer", transition: "color 0.2s", textTransform: "uppercase",
+            display: "inline-flex", alignItems: "center", gap: 6,
           }}>
+            {t === "setup" && <BookOpen size={12} />}
             {t}
           </button>
         ))}
       </div>
 
       <main style={{ padding: "32px" }}>
-        {loading && !overview && (
+        {tab === "setup" && <SetupTab />}
+        {tab !== "setup" && loading && !overview && (
           <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", fontSize: 13 }}>
             <Activity size={24} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
             Loading dashboard data...
           </div>
         )}
-        {error && !loading && (
+        {tab !== "setup" && error && !loading && (
           <div style={{
             textAlign: "center", padding: "80px 20px", color: "#ef4444", fontSize: 13,
             background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12,
@@ -279,6 +282,197 @@ function OverviewTab({ overview }: { overview: Overview }) {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const codeStyle = {
+  background: "#0d1120", border: "1px solid #1e2332", borderRadius: 8,
+  padding: "16px 20px", fontSize: 12, color: "#e2e8f0", lineHeight: 1.8,
+  overflowX: "auto" as const, fontFamily: "'IBM Plex Mono', monospace", margin: 0,
+};
+
+const commentStyle = { color: "#64748b", fontStyle: "italic" as const };
+
+function SetupTab() {
+  const [copied, setCopied] = useState("");
+
+  const proxyUrl = import.meta.env.VITE_PROXY_API_URL || "http://localhost:3001";
+
+  const configs = {
+    opencode: `# Add to your opencode config (~/.opencode/config.json or project's opencode.json)
+{
+  "anthropicBaseUrl": "${proxyUrl}/proxy",
+  "headers": {
+    "x-engineer-id": "your-name"
+  }
+}`,
+    claudeCode: `# Set these environment variables before running Claude Code:
+export ANTHROPIC_BASE_URL="${proxyUrl}/proxy"
+export X_ENGINEER_ID="your-name"
+
+# Or pass them inline:
+ANTHROPIC_BASE_URL="${proxyUrl}/proxy" \\
+X_ENGINEER_ID="your-name" \\
+claude`,
+    curl: `curl ${proxyUrl}/api/metrics/overview`,
+  };
+
+  async function handleCopy(key: string, text: string) {
+    await navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(""), 2000);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 28, maxWidth: 800 }}>
+      {/* Header */}
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#f8fafc", marginBottom: 8, letterSpacing: "-0.02em" }}>
+          Connecting to the Proxy
+        </div>
+        <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.7, margin: 0 }}>
+          Point your AI coding tools at the Cost Guardian proxy instead of directly at the Anthropic API.
+          The proxy authenticates each engineer, enforces budget policy, and records every token spent.
+        </p>
+      </div>
+
+      {/* opencode */}
+      <div style={{ background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, padding: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Terminal size={16} color="#6366f1" />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", letterSpacing: "-0.01em" }}>opencode</span>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 12px", lineHeight: 1.6 }}>
+          Add the proxy base URL and your engineer ID to your opencode config. The{" "}
+          <code style={{ color: "#6366f1", background: "#0b0e1a", padding: "1px 6px", borderRadius: 4, fontSize: 11 }}>
+            x-engineer-id
+          </code>{" "}
+          header is how the proxy identifies you for budget enforcement.
+        </p>
+        <div style={{ position: "relative" }}>
+          <pre style={codeStyle}>
+            <span style={commentStyle}>{"// ~/.opencode/config.json or project's opencode.json"}</span>{"\n"}
+            {JSON.stringify({ anthropicBaseUrl: `${proxyUrl}/proxy`, headers: { "x-engineer-id": "your-name" } }, null, 2)}
+          </pre>
+          <button
+            onClick={() => handleCopy("opencode", configs.opencode)}
+            style={{
+              position: "absolute", top: 8, right: 8,
+              background: copied === "opencode" ? "rgba(99,102,241,0.2)" : "#0b0e1a",
+              border: "1px solid #1e2332", borderRadius: 6,
+              padding: "4px 10px", color: copied === "opencode" ? "#6366f1" : "#64748b",
+              cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono', monospace",
+              display: "flex", alignItems: "center", gap: 4,
+            }}
+          >
+            <Copy size={10} /> {copied === "opencode" ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </div>
+
+      {/* Claude Code */}
+      <div style={{ background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, padding: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Terminal size={16} color="#f59e0b" />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", letterSpacing: "-0.01em" }}>Claude Code</span>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 12px", lineHeight: 1.6 }}>
+          Set two environment variables before running Claude Code. The{" "}
+          <code style={{ color: "#f59e0b", background: "#0b0e1a", padding: "1px 6px", borderRadius: 4, fontSize: 11 }}>
+            ANTHROPIC_BASE_URL
+          </code>{" "}
+          routes all requests through the proxy, and{" "}
+          <code style={{ color: "#f59e0b", background: "#0b0e1a", padding: "1px 6px", borderRadius: 4, fontSize: 11 }}>
+            X_ENGINEER_ID
+          </code>{" "}
+          identifies you.
+        </p>
+        <div style={{ position: "relative" }}>
+          <pre style={codeStyle}>
+            <span style={commentStyle}>{"# Set env vars then run Claude Code"}</span>{"\n"}
+            <span style={{ color: "#22c55e" }}>export</span>{" "}
+            <span style={{ color: "#f59e0b" }}>ANTHROPIC_BASE_URL</span>=
+            <span style={{ color: "#e2e8f0" }}>"{proxyUrl}/proxy"</span>{"\n"}
+            <span style={{ color: "#22c55e" }}>export</span>{" "}
+            <span style={{ color: "#f59e0b" }}>X_ENGINEER_ID</span>=
+            <span style={{ color: "#e2e8f0" }}>"your-name"</span>{"\n"}
+            <span>{"\n"}</span>
+            <span style={{ color: "#64748b" }}>claude</span>
+          </pre>
+          <button
+            onClick={() => handleCopy("claude", configs.claudeCode)}
+            style={{
+              position: "absolute", top: 8, right: 8,
+              background: copied === "claude" ? "rgba(99,102,241,0.2)" : "#0b0e1a",
+              border: "1px solid #1e2332", borderRadius: 6,
+              padding: "4px 10px", color: copied === "claude" ? "#6366f1" : "#64748b",
+              cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono', monospace",
+              display: "flex", alignItems: "center", gap: 4,
+            }}
+          >
+            <Copy size={10} /> {copied === "claude" ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: "#475569", margin: "12px 0 0", lineHeight: 1.6 }}>
+          Alternatively, pass them inline:{" "}
+          <code style={{ background: "#0b0e1a", padding: "2px 8px", borderRadius: 4, fontSize: 11, color: "#94a3b8" }}>
+            ANTHROPIC_BASE_URL="{proxyUrl}/proxy" X_ENGINEER_ID="your-name" claude
+          </code>
+        </p>
+      </div>
+
+      {/* Verify */}
+      <div style={{ background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, padding: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Activity size={16} color="#22c55e" />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", letterSpacing: "-0.01em" }}>Verify the Connection</span>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 12px", lineHeight: 1.6 }}>
+          Test that the proxy is reachable and returning data:
+        </p>
+        <div style={{ position: "relative" }}>
+          <pre style={codeStyle}>
+            <span style={commentStyle}>{"# Check proxy health"}</span>{"\n"}
+            <span style={{ color: "#22c55e" }}>curl</span>{" "}
+            <span style={{ color: "#6366f1" }}>{proxyUrl}</span>
+            <span style={{ color: "#e2e8f0" }}>/health</span>{"\n"}
+            {"\n"}
+            <span style={commentStyle}>{"# View live metrics"}</span>{"\n"}
+            <span style={{ color: "#22c55e" }}>curl</span>{" "}
+            <span style={{ color: "#6366f1" }}>{proxyUrl}</span>
+            <span style={{ color: "#e2e8f0" }}>/api/metrics/overview</span>
+          </pre>
+          <button
+            onClick={() => handleCopy("curl", configs.curl)}
+            style={{
+              position: "absolute", top: 8, right: 8,
+              background: copied === "curl" ? "rgba(99,102,241,0.2)" : "#0b0e1a",
+              border: "1px solid #1e2332", borderRadius: 6,
+              padding: "4px 10px", color: copied === "curl" ? "#6366f1" : "#64748b",
+              cursor: "pointer", fontSize: 10, fontFamily: "'IBM Plex Mono', monospace",
+              display: "flex", alignItems: "center", gap: 4,
+            }}
+          >
+            <Copy size={10} /> {copied === "curl" ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </div>
+
+      {/* Proxy URL badge */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "14px 20px", borderRadius: 8,
+        background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)",
+      }}>
+        <Shield size={14} color="#6366f1" />
+        <div>
+          <div style={{ fontSize: 11, color: "#818cf8", fontWeight: 600 }}>Proxy Endpoint</div>
+          <div style={{ fontSize: 12, color: "#c7d2fe", fontFamily: "'IBM Plex Mono', monospace", marginTop: 2 }}>
+            {proxyUrl}
+          </div>
         </div>
       </div>
     </div>
