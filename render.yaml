@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: claude-cost-guardian-proxy
+    env: node
+    region: ohio
+    plan: free
+    buildCommand: npm install && npm run build --workspace=packages/shared && npm run build --workspace=packages/proxy
+    startCommand: node packages/proxy/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PORT
+        value: "3001"

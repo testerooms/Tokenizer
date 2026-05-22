@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 import { calculateCost, SpendSummary, TeamSummary, TokenUsageRecord, Alert } from "@claude-cost-guardian/shared";
 import { logger } from "./logger";
 import { v4 as uuidv4 } from "uuid";
@@ -10,6 +11,7 @@ class GuardianDB {
   private db!: Database.Database;
 
   initialize() {
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
     this.db = new Database(DB_PATH);
     this.db.pragma("journal_mode = WAL");
     this.migrate();
