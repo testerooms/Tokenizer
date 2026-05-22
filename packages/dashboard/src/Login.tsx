@@ -189,7 +189,7 @@ export default function Login({ onAuth }: { onAuth: () => void }) {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <div style={styles.title}>Claude Cost Guardian</div>
+          <div style={styles.title}>Tokenizer</div>
         </div>
         <div style={styles.subtitle}>AI SPEND GOVERNANCE</div>
 

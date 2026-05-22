@@ -113,7 +113,7 @@ export default function Dashboard({ profile }: { profile: UserProfile }) {
           </div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em", color: "#f8fafc" }}>
-              Claude Cost Guardian
+              Tokenizer
             </div>
             <div style={{ fontSize: 10, color: "#64748b", letterSpacing: "0.08em" }}>
               AI SPEND GOVERNANCE

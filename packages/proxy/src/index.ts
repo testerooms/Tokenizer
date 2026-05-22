@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 // ─── Root ────────────────────────────────────────────────────────────────────
-app.get("/", (_req, res) => res.json({ service: "Claude Cost Guardian Proxy", status: "running", docs: "/health" }));
+app.get("/", (_req, res) => res.json({ service: "Tokenizer Proxy", status: "running", docs: "/health" }));
 
 // ─── Health check ──────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
