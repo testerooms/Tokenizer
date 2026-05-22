@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tokenizer — AI Cost Control</title>
+    <title>Claude Cost Guardian — AI Spend Governance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg: #0a0a0a;
-            --surface: #141414;
-            --text: #e8e8e8;
-            --muted: #666;
-            --accent: #f59e0b;
-            --accent-dim: rgba(245, 158, 11, 0.15);
-            --line: #1f1f1f;
-            --red: #dc2626;
+            --bg: #0b0e1a;
+            --surface: #0f1628;
+            --border: #1e2332;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --bright: #f8fafc;
+            --accent: #6366f1;
+            --accent2: #8b5cf6;
+            --accent-glow: rgba(99,102,241,0.15);
+            --green: #22c55e;
+            --red: #ef4444;
+            --radius: 12px;
         }
 
         html { scroll-behavior: smooth; }
@@ -25,376 +29,300 @@
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: 'Sora', sans-serif;
-            font-weight: 300;
+            font-family: 'IBM Plex Mono', monospace;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1120px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
+        .container { max-width: 1120px; margin: 0 auto; padding: 0 2rem; }
 
         /* ─── TOP BAR ─── */
         .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.5rem 0;
-            border-bottom: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 0; border-bottom: 1px solid var(--border);
+            position: relative; z-index: 10;
         }
-
         .logo {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 1.1rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--text);
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em;
+            color: var(--bright); text-transform: uppercase;
+        }
+        .logo-icon {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
         }
         .logo span { color: var(--accent); }
 
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .status-badge {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
             color: var(--muted);
         }
         .status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-            animation: pulse 2s infinite;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--green); animation: pulse 2s infinite;
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* ─── HERO ─── */
-        .hero {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 4rem;
-            padding: 5rem 0 4rem;
-            align-items: start;
+        .topbar-cta {
+            font-size: 0.65rem; font-weight: 600; letter-spacing: 0.06em;
+            color: var(--bright); text-decoration: none; text-transform: uppercase;
+            padding: 8px 18px; border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            transition: opacity 0.2s;
         }
+        .topbar-cta:hover { opacity: 0.85; }
 
+        /* ─── HERO ─── */
+        #hero-canvas {
+            position: absolute; top: 0; left: 0; width: 100%;
+            height: 100%; pointer-events: none; z-index: 0;
+        }
+        .hero-wrap {
+            position: relative; overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero {
+            display: grid; grid-template-columns: 1.4fr 1fr;
+            gap: 4rem; padding: 5rem 0 4rem; align-items: start;
+            position: relative; z-index: 1;
+        }
         .hero-headline {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: clamp(2.2rem, 5vw, 4rem);
-            line-height: 1.05;
-            text-transform: uppercase;
-            letter-spacing: -0.02em;
-            color: var(--text);
+            font-size: clamp(2rem, 4.5vw, 3.5rem);
+            font-weight: 700; line-height: 1.1;
+            letter-spacing: -0.03em; color: var(--bright);
         }
         .hero-headline em {
             font-style: normal;
-            color: var(--accent);
-            display: block;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .hero-sub {
-            margin-top: 1.5rem;
-            font-size: 1rem;
-            color: var(--muted);
-            max-width: 32rem;
-            line-height: 1.7;
+            margin-top: 1.25rem; font-size: 0.85rem;
+            color: var(--muted); max-width: 32rem; line-height: 1.8;
         }
         .hero-cta {
-            margin-top: 2.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--accent);
-            color: #0a0a0a;
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            text-decoration: none;
-            padding: 0.9rem 2rem;
-            transition: opacity 0.2s;
+            margin-top: 2rem; display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; text-decoration: none;
+            color: var(--bright); padding: 12px 24px; border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            box-shadow: 0 4px 24px var(--accent-glow);
+            transition: opacity 0.2s, transform 0.2s; cursor: pointer;
         }
-        .hero-cta:hover { opacity: 0.85; }
+        .hero-cta:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        .hero-metric {
-            text-align: right;
-            padding-top: 0.5rem;
+        .hero-cta.secondary {
+            background: transparent; border: 1px solid var(--border);
+            box-shadow: none; color: var(--text);
         }
+        .hero-cta.secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+        .hero-metric { text-align: right; padding-top: 0.5rem; }
         .hero-number {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: clamp(4rem, 10vw, 8rem);
-            line-height: 0.9;
-            letter-spacing: -0.04em;
-            color: var(--red);
+            font-size: clamp(3.5rem, 8vw, 7rem);
+            font-weight: 700; line-height: 0.9; letter-spacing: -0.04em;
+            background: linear-gradient(135deg, var(--red), #f97316);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .hero-number-label {
-            font-size: 0.8rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            font-size: 0.7rem; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.08em;
             margin-top: 0.5rem;
         }
-        .hero-number-sub {
-            display: block;
-            font-size: 0.7rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            margin-top: 0.25rem;
-            font-weight: 400;
-        }
         .hero-ref {
-            margin-top: 2rem;
-            font-size: 0.65rem;
-            color: #444;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border-top: 1px solid var(--line);
-            padding-top: 1rem;
+            margin-top: 1.5rem; font-size: 0.6rem; color: #3b3f54;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            border-top: 1px solid var(--border); padding-top: 1rem;
         }
 
         /* ─── SECTION DIVIDER ─── */
+        section { padding: 5rem 0; }
+        section + section { border-top: 1px solid var(--border); }
+
         .section-label {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.65rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+            font-size: 0.6rem; font-weight: 600; letter-spacing: 0.15em;
+            text-transform: uppercase; color: var(--accent);
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 12px;
         }
         .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--line);
+            content: ''; flex: 1; height: 1px; background: var(--border);
         }
-
-        section { padding: 4rem 0; }
-        section + section { border-top: 1px solid var(--line); }
+        .section-title {
+            font-size: 1.5rem; font-weight: 700; color: var(--bright);
+            letter-spacing: -0.02em; margin-bottom: 1rem;
+        }
+        .section-desc {
+            font-size: 0.85rem; color: var(--muted); max-width: 36rem;
+            line-height: 1.8;
+        }
 
         /* ─── PROBLEM ─── */
-        .problem-text {
-            font-size: 1.15rem;
-            max-width: 48rem;
-            color: var(--muted);
-            margin-bottom: 2rem;
-        }
-
         .cost-table {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            border: 1px solid var(--line);
-            font-size: 0.85rem;
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; margin-top: 2rem;
         }
         .cost-table-header {
             display: contents;
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.65rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--muted);
+            font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--muted);
         }
         .cost-table-header > div {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--line);
+            padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
             background: var(--surface);
         }
-        .cost-table-row {
-            display: contents;
-            color: var(--muted);
-        }
+        .cost-table-row { display: contents; color: var(--muted); }
         .cost-table-row > div {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--line);
+            padding: 0.75rem 1rem; border-bottom: 1px solid var(--border);
+            font-size: 0.8rem; transition: background 0.2s;
         }
+        .cost-table-row:hover > div { background: rgba(99,102,241,0.04); }
         .cost-table-row:last-child > div { border-bottom: none; }
         .cost-table-row > div:last-child {
-            font-family: 'Archivo Black', sans-serif;
-            color: var(--text);
+            font-weight: 700; color: var(--text); font-size: 0.9rem;
         }
         .cost-table-row.danger > div:last-child { color: var(--red); }
 
-        /* ─── HOW IT WORKS ─── */
-        .flow {
-            display: flex;
-            align-items: flex-start;
-            gap: 0;
-            margin-top: 2rem;
-        }
+        /* ─── FLOW ─── */
+        .flow { display: flex; gap: 0; margin-top: 2rem; }
         .flow-step {
-            flex: 1;
-            position: relative;
-            padding: 1.5rem;
-            border: 1px solid var(--line);
-            border-right: none;
+            flex: 1; position: relative; padding: 1.5rem;
+            border: 1px solid var(--border); border-right: none;
+            transition: background 0.3s, border-color 0.3s;
         }
-        .flow-step:last-child { border-right: 1px solid var(--line); }
+        .flow-step:last-child { border-right: 1px solid var(--border); }
+        .flow-step:hover {
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+        .flow-step:hover + .flow-step { border-left-color: var(--accent); }
         .flow-step-num {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.6rem;
-            letter-spacing: 0.15em;
-            color: var(--accent);
-            margin-bottom: 0.75rem;
+            font-size: 0.55rem; font-weight: 600; letter-spacing: 0.15em;
+            color: var(--accent); margin-bottom: 0.75rem;
         }
         .flow-step-title {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
+            font-size: 0.8rem; font-weight: 700; color: var(--bright);
+            letter-spacing: 0.02em; margin-bottom: 0.5rem;
         }
         .flow-step-desc {
-            font-size: 0.8rem;
-            color: var(--muted);
-            line-height: 1.5;
+            font-size: 0.75rem; color: var(--muted); line-height: 1.6;
         }
         .flow-step + .flow-step::before {
-            content: '→';
-            position: absolute;
-            left: -0.7rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent);
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 1.2rem;
+            content: '→'; position: absolute; left: -0.6rem; top: 50%;
+            transform: translateY(-50%); color: var(--accent);
+            font-size: 1rem; font-weight: 700;
         }
 
         /* ─── FEATURES ─── */
         .features-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 1px;
-            background: var(--line);
-            border: 1px solid var(--line);
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 1px; border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
             margin-top: 2rem;
         }
         .feature-card {
-            background: var(--bg);
-            padding: 2rem 1.5rem;
+            background: var(--bg); padding: 2rem 1.5rem;
+            transition: background 0.3s;
         }
+        .feature-card:hover { background: var(--surface); }
         .feature-icon {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            display: block;
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--accent-glow); border: 1px solid rgba(99,102,241,0.25);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1rem; font-size: 1rem;
         }
         .feature-title {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 0.5rem;
+            font-size: 0.75rem; font-weight: 700; color: var(--bright);
+            letter-spacing: 0.04em; margin-bottom: 0.5rem;
         }
         .feature-desc {
-            font-size: 0.8rem;
-            color: var(--muted);
-            line-height: 1.5;
+            font-size: 0.75rem; color: var(--muted); line-height: 1.6;
         }
 
         /* ─── QUICK START ─── */
         .quickstart-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            margin-top: 2rem;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 3rem; margin-top: 2rem;
         }
-        .quickstart-desc {
-            font-size: 0.9rem;
-            color: var(--muted);
-            line-height: 1.7;
-        }
+        .quickstart-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.8; }
 
         .code-block {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            padding: 1.5rem;
-            position: relative;
-            overflow-x: auto;
+            background: #060912; border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1.5rem;
+            position: relative; overflow-x: auto;
         }
         .code-block pre {
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            line-height: 1.8;
-            color: #ccc;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem; line-height: 1.9; color: #94a3b8;
         }
-        .code-block .cm { color: #555; }
+        .code-block .cm { color: #3b3f54; font-style: italic; }
+        .code-block .kw { color: #818cf8; }
+        .code-block .str { color: #e2e8f0; }
+
         .copy-btn {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            background: none;
-            border: 1px solid var(--line);
-            color: var(--muted);
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.6rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            padding: 0.3rem 0.6rem;
-            cursor: pointer;
-            transition: color 0.2s, border-color 0.2s;
+            position: absolute; top: 0.75rem; right: 0.75rem;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 6px; color: var(--muted); padding: 4px 10px;
+            font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
+            cursor: pointer; transition: color 0.2s, border-color 0.2s;
         }
-        .copy-btn:hover { color: var(--text); border-color: var(--text); }
+        .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
 
         /* ─── CTA ─── */
         .cta {
-            text-align: center;
-            padding: 5rem 0;
-            border-top: 1px solid var(--line);
+            text-align: center; padding: 6rem 0;
+            border-top: 1px solid var(--border);
         }
         .cta-title {
-            font-family: 'Archivo Black', sans-serif;
             font-size: clamp(1.5rem, 3vw, 2.5rem);
-            text-transform: uppercase;
-            letter-spacing: -0.02em;
+            font-weight: 700; letter-spacing: -0.03em;
+        }
+        .cta-title span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .cta-sub {
+            color: var(--muted); font-size: 0.85rem;
+            margin-top: 1rem; line-height: 1.7;
         }
         .cta-actions {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
+            display: flex; justify-content: center; gap: 1rem;
             margin-top: 2rem;
         }
-        .cta-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            text-decoration: none;
-            padding: 0.9rem 2rem;
-            transition: opacity 0.2s;
-        }
-        .cta-btn.primary { background: var(--accent); color: #0a0a0a; }
-        .cta-btn.secondary { border: 1px solid var(--line); color: var(--text); }
-        .cta-btn:hover { opacity: 0.8; }
 
         footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.7rem;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            text-align: center; padding: 2rem 0;
+            font-size: 0.65rem; color: #3b3f54;
+            border-top: 1px solid var(--border);
         }
 
-        /* ─── RESPONSIVE ─── */
+        /* ─── SCROLL REVEAL ─── */
+        .reveal {
+            opacity: 0; transform: translateY(24px);
+            transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
         @media (max-width: 768px) {
             .hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 0; }
             .hero-metric { text-align: left; }
+            .hero-cta.secondary { margin-top: 0; }
+            .cta-actions { flex-direction: column; align-items: center; }
             .cost-table { grid-template-columns: 1fr; }
             .cost-table-header, .cost-table-row { display: grid; grid-template-columns: 1fr 1fr 1fr; }
             .flow { flex-direction: column; }
-            .flow-step { border-right: 1px solid var(--line); }
+            .flow-step { border-right: 1px solid var(--border); }
             .flow-step + .flow-step { border-top: none; }
-            .flow-step + .flow-step::before { content: '↓'; left: 50%; top: -0.9rem; transform: translateX(-50%); }
+            .flow-step + .flow-step::before { content: '↓'; left: 50%; top: -0.7rem; transform: translateX(-50%); }
             .features-grid { grid-template-columns: 1fr 1fr; }
             .quickstart-layout { grid-template-columns: 1fr; }
-            .cta-actions { flex-direction: column; align-items: center; }
         }
         @media (max-width: 480px) {
             .features-grid { grid-template-columns: 1fr; }
@@ -403,72 +331,69 @@
 </head>
 <body>
 
+<div class="hero-wrap">
+    <canvas id="hero-canvas"></canvas>
+    <div class="container">
+        <header class="topbar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+                Claude Cost <span>Guardian</span>
+            </div>
+            <div class="topbar-right">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    All Systems Monitored
+                </div>
+                <a href="/dashboard" class="topbar-cta">Dashboard →</a>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div>
+                <h1 class="hero-headline">
+                    Your AI Bill<br>is the Next<em>Uber Story</em>
+                </h1>
+                <p class="hero-sub">
+                    Token-based billing scales faster than your budget. One runaway prompt, one unmonitored team — and your monthly burn goes vertical. Claude Cost Guardian puts a hard ceiling on the spend.
+                </p>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <a href="#quick-start" class="hero-cta">Deploy the Proxy →</a>
+                    <a href="/dashboard" class="hero-cta secondary">Dashboard →</a>
+                </div>
+            </div>
+            <div class="hero-metric">
+                <div class="hero-number">$247K</div>
+                <div class="hero-number-label">potential monthly overage at 200 engineers</div>
+                <div class="hero-ref">Based on 1M tokens/engineer/day at Claude 3.5 Sonnet pricing</div>
+            </div>
+        </section>
+    </div>
+</div>
+
 <div class="container">
-
-    <header class="topbar">
-        <div class="logo">Token<span>izer</span></div>
-        <div class="status">
-            <span class="status-dot"></span>
-            All Systems Monitored
-        </div>
-    </header>
-
-    <!-- ─── HERO ─── -->
-    <section class="hero">
-        <div>
-            <h1 class="hero-headline">
-                Your AI Bill<br>is the Next<em>Uber Story</em>
-            </h1>
-            <p class="hero-sub">
-                Token-based billing scales faster than your budget. One runaway prompt, one unmonitored team — and your monthly burn goes vertical. Tokenizer puts a hard ceiling on the spend — whether your team ships in opencode, Claude Code, or any Anthropic API client.
-            </p>
-            <a href="#quick-start" class="hero-cta">Deploy the Proxy →</a>
-        </div>
-        <div class="hero-metric">
-            <div class="hero-number">$247K</div>
-            <div class="hero-number-label">potential monthly overage<br>at 200 engineers</div>
-            <div class="hero-number-sub">without spend controls</div>
-            <div class="hero-ref">Based on 1M tokens/engineer/day at Claude 3.5 Sonnet pricing &bullet; Works with opencode, Claude Code, and any Anthropic API client</div>
-        </div>
-    </section>
-
     <!-- ─── PROBLEM ─── -->
-    <section id="problem">
+    <section id="problem" class="reveal">
         <div class="section-label">The Bet</div>
-        <p class="problem-text">
-            Every engineer with API access is a variable cost center. No approval flow, no budget gate, no visibility — just a growing number on next month's AWS bill. The question isn't if you'll hit a surprise, but when.
+        <p class="section-desc">
+            Every engineer with API access is a variable cost center. No approval flow, no budget gate, no visibility — just a growing number on next month's cloud bill. The question isn't if you'll hit a surprise, but when.
         </p>
         <div class="cost-table">
             <div class="cost-table-header">
-                <div>Engineers</div>
-                <div>Tier</div>
-                <div>Monthly Burn</div>
+                <div>Engineers</div><div>Tier</div><div>Monthly Burn</div>
             </div>
-            <div class="cost-table-row">
-                <div>10</div>
-                <div>Pilot</div>
-                <div>$3,200</div>
-            </div>
-            <div class="cost-table-row">
-                <div>50</div>
-                <div>Team</div>
-                <div>$16,000</div>
-            </div>
-            <div class="cost-table-row">
-                <div>200</div>
-                <div>Organization</div>
-                <div>$64,000</div>
-            </div>
-            <div class="cost-table-row danger">
-                <div>200</div>
-                <div>Unmonitored</div>
-                <div>$247,000</div>
-            </div>
+            <div class="cost-table-row"><div>10</div><div>Pilot</div><div>$3,200</div></div>
+            <div class="cost-table-row"><div>50</div><div>Team</div><div>$16,000</div></div>
+            <div class="cost-table-row"><div>200</div><div>Organization</div><div>$64,000</div></div>
+            <div class="cost-table-row danger"><div>200</div><div>Unmonitored</div><div>$247,000</div></div>
         </div>
     </section>
 
     <!-- ─── HOW IT WORKS ─── -->
-    <section id="how-it-works">
+    <section id="how-it-works" class="reveal">
         <div class="section-label">Architecture</div>
         <div class="flow">
             <div class="flow-step">
@@ -479,7 +404,7 @@
             <div class="flow-step">
                 <div class="flow-step-num">02</div>
                 <div class="flow-step-title">Enforce</div>
-                <div class="flow-step-desc">Policy engine checks budget &mdash; blocks, warns, or allows based on hard and soft limits.</div>
+                <div class="flow-step-desc">Policy engine checks budget — blocks, warns, or allows based on hard and soft limits.</div>
             </div>
             <div class="flow-step">
                 <div class="flow-step-num">03</div>
@@ -490,36 +415,36 @@
     </section>
 
     <!-- ─── FEATURES ─── -->
-    <section id="features">
+    <section id="features" class="reveal">
         <div class="section-label">Capabilities</div>
         <div class="features-grid">
             <div class="feature-card">
-                <span class="feature-icon">⌖</span>
+                <div class="feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
                 <div class="feature-title">Hard Limits</div>
                 <div class="feature-desc">Automatic 429 when spend crosses the line. No exceptions, no surprises.</div>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">▦</span>
+                <div class="feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
                 <div class="feature-title">Per-Engineer Budgets</div>
                 <div class="feature-desc">Different tiers for different roles. Assign soft and hard caps per developer.</div>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">◉</span>
+                <div class="feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
                 <div class="feature-title">Real-time Tracking</div>
                 <div class="feature-desc">Live spend per engineer, team, and model — exposed via API and dashboard.</div>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">⊞</span>
+                <div class="feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
                 <div class="feature-title">Team Policies</div>
                 <div class="feature-desc">Set budgets per team. Different orgs, different constraints, one proxy.</div>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">⏚</span>
+                <div class="feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
                 <div class="feature-title">Alert Thresholds</div>
                 <div class="feature-desc">Warnings at 50%, 80%, 95% — so you act before the block hits.</div>
             </div>
             <div class="feature-card">
-                <span class="feature-icon">↗</span>
+                <div class="feature-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
                 <div class="feature-title">Usage Analytics</div>
                 <div class="feature-desc">Trends, top spenders, model mix — all queryable from the metrics API.</div>
             </div>
@@ -527,50 +452,57 @@
     </section>
 
     <!-- ─── QUICK START ─── -->
-    <section id="quick-start">
+    <section id="quick-start" class="reveal">
         <div class="section-label">Onboard</div>
         <div class="quickstart-layout">
             <div>
                 <p class="quickstart-desc">
-                    Clone, install, configure. The proxy runs as a standalone Node.js service on your infrastructure. Point opencode or Claude Code at <code style="color:var(--accent)">localhost:3001</code> and the whole team is guarded — paid models included.
+                    Clone, install, configure. The proxy runs as a standalone Node.js service on your infrastructure. Point opencode or Claude Code at the proxy URL and the whole team is guarded.
                 </p>
-                <p class="quickstart-desc" style="margin-top:1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:#555;">
+                <p style="font-size:0.7rem;color:#3b3f54;margin-top:1rem;text-transform:uppercase;letter-spacing:0.08em;">
                     Requires Node 18+ and an Anthropic API key.
                 </p>
             </div>
             <div class="code-block">
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                <pre><span class="cm"># clone & install</span>
-git clone https://github.com/your-org/tokenizer
-cd tokenizer/packages/proxy
-npm install && npm run build
+                <pre><span class="cm"># set the proxy as your API base</span>
+ANTHROPIC_BASE_URL="https://proxy:3001/proxy"
+X_ENGINEER_ID="your-name"
 
-<span class="cm"># configure & run</span>
-export ANTHROPIC_API_KEY="sk-ant-..."
-npm start</pre>
+<span class="cm"># run Claude Code through it</span>
+claude
+
+<span class="cm"># or configure opencode</span>
+<span class="kw">opencode config set</span> <span class="str">anthropicBaseUrl</span> https://proxy:3001/proxy</pre>
             </div>
         </div>
     </section>
-
 </div>
 
 <!-- ─── CTA ─── -->
-<section class="cta">
+<section class="cta reveal">
     <div class="container">
-                <div class="cta-title">Stop guessing. Start guarding.</div>
-        <p style="color:var(--muted);font-size:0.85rem;margin-top:1rem">Works with opencode, Claude Code &mdash; any tool targeting the Anthropic API.</p>
+        <div class="cta-title">Stop guessing. <span>Start guarding.</span></div>
+        <p class="cta-sub">Works with opencode, Claude Code — any tool targeting the Anthropic API.</p>
         <div class="cta-actions">
-            <a href="https://github.com/testerooms/Tokenizer" class="cta-btn primary">View on GitHub →</a>
-            <a href="/dashboard" class="cta-btn secondary">Dashboard →</a>
+            <a href="https://github.com/testerooms/Tokenizer" class="hero-cta">View on GitHub →</a>
+            <a href="/dashboard" class="hero-cta secondary">Dashboard →</a>
         </div>
     </div>
 </section>
 
 <footer>
-    <div class="container">Tokenizer &mdash; 2026</div>
+    <div class="container">Claude Cost Guardian — 2026</div>
 </footer>
 
 <script>
+// ─── Scroll Reveal ───
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ─── Copy Button ───
 function copyCode(btn) {
     const pre = btn.nextElementSibling;
     const txt = pre.textContent.replace(/^\s+|\s+$/g, '');
@@ -579,7 +511,97 @@ function copyCode(btn) {
         setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });
 }
-</script>
 
+// ─── 3D Particle Canvas ───
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+let mouseX = 0, mouseY = 0;
+let particles = [];
+let animId;
+
+function resize() {
+    const wrap = canvas.parentElement;
+    canvas.width = wrap.offsetWidth;
+    canvas.height = wrap.offsetHeight;
+}
+window.addEventListener('resize', resize);
+document.querySelector('.hero-wrap').addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) / rect.width;
+    mouseY = (e.clientY - rect.top) / rect.height;
+});
+
+class Particle {
+    constructor() { this.reset(); }
+    reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.z = Math.random() * 600;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+        this.speedZ = (Math.random() - 0.5) * 0.2;
+        this.opacity = Math.random() * 0.5 + 0.15;
+    }
+    update() {
+        const dx = (mouseX - 0.5) * 0.4;
+        const dy = (mouseY - 0.5) * 0.4;
+        this.x += this.speedX + dx;
+        this.y += this.speedY + dy;
+        this.z += this.speedZ;
+        if (this.z < 0) this.z = 600;
+        if (this.z > 600) this.z = 0;
+        if (this.x < -50) this.x = canvas.width + 50;
+        if (this.x > canvas.width + 50) this.x = -50;
+        if (this.y < -50) this.y = canvas.height + 50;
+        if (this.y > canvas.height + 50) this.y = -50;
+    }
+    draw() {
+        const scale = 1 + this.z / 1200;
+        const x = (this.x - canvas.width / 2) * scale + canvas.width / 2;
+        const y = (this.y - canvas.height / 2) * scale + canvas.height / 2;
+        const alpha = this.opacity * (1 - this.z / 600);
+        ctx.beginPath();
+        ctx.arc(x, y, this.size * scale, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(99, 102, 241, ${alpha})`;
+        ctx.fill();
+    }
+}
+
+function initParticles() {
+    const count = Math.min(180, Math.floor(canvas.width * canvas.height / 5000));
+    particles = Array.from({ length: count }, () => new Particle());
+}
+
+function drawConnections() {
+    for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dz = particles[i].z - particles[j].z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist < 120) {
+                const alpha = (1 - dist / 120) * 0.15;
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.strokeStyle = `rgba(99, 102, 241, ${alpha})`;
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawConnections();
+    animId = requestAnimationFrame(animate);
+}
+
+resize();
+initParticles();
+animate();
+</script>
 </body>
 </html>
