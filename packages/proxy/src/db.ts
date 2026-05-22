@@ -15,6 +15,7 @@ class GuardianDB {
     this.db = new Database(DB_PATH);
     this.db.pragma("journal_mode = WAL");
     this.migrate();
+    this.seed();
     logger.info(`Database initialized at ${DB_PATH}`);
   }
 
@@ -212,6 +213,63 @@ class GuardianDB {
       WHERE timestamp >= datetime('now', ? || ' days')
       GROUP BY date ORDER BY date
     `).all(`-${days}`) as any[];
+  }
+
+  private seed() {
+    const count = (this.db.prepare("SELECT COUNT(*) as c FROM engineers").get() as any)?.c ?? 0;
+    if (count > 0) return;
+
+    logger.info("Seeding demo data...");
+
+    const engineers = [
+      { id: "alice", name: "Alice Chen", team: "platform", tier: "power" },
+      { id: "bob", name: "Bob Martinez", team: "platform", tier: "standard" },
+      { id: "charlie", name: "Charlie Park", team: "ml", tier: "power" },
+      { id: "diana", name: "Diana Lopez", team: "ml", tier: "standard" },
+      { id: "eve", name: "Eve Thompson", team: "ml", tier: "standard" },
+      { id: "frank", name: "Frank Osei", team: "sales", tier: "restricted" },
+    ];
+
+    const insertEng = this.db.prepare(
+      "INSERT OR IGNORE INTO engineers (id, email, name, team_id, tier) VALUES (?, ?, ?, ?, ?)"
+    );
+    for (const e of engineers) {
+      insertEng.run(e.id, `${e.id}@company.com`, e.name, e.team, e.tier);
+    }
+
+    this.db.prepare(
+      "INSERT OR IGNORE INTO budget_policies (team_id, monthly_cap_usd, per_engineer_soft_limit_usd, per_engineer_hard_limit_usd) VALUES (?, ?, ?, ?)"
+    ).run("platform", 5000, 150, 500);
+    this.db.prepare(
+      "INSERT OR IGNORE INTO budget_policies (team_id, monthly_cap_usd, per_engineer_soft_limit_usd, per_engineer_hard_limit_usd) VALUES (?, ?, ?, ?)"
+    ).run("ml", 8000, 200, 600);
+    this.db.prepare(
+      "INSERT OR IGNORE INTO budget_policies (team_id, monthly_cap_usd, per_engineer_soft_limit_usd, per_engineer_hard_limit_usd) VALUES (?, ?, ?, ?)"
+    ).run("sales", 2000, 50, 150);
+
+    const models = ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"];
+    const insertUsage = this.db.prepare(
+      "INSERT INTO usage_records (id, engineer_id, team_id, timestamp, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_usd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    const now = Date.now();
+    for (let day = 30; day >= 0; day--) {
+      for (const eng of engineers) {
+        const requests = Math.floor(Math.random() * 8) + 1;
+        for (let r = 0; r < requests; r++) {
+          const model = models[Math.floor(Math.random() * models.length)];
+          const inputTokens = Math.floor(Math.random() * 4000) + 500;
+          const outputTokens = Math.floor(Math.random() * 1500) + 100;
+          const cacheRead = Math.floor(Math.random() * 2000);
+          const cacheWrite = Math.floor(Math.random() * 500);
+          const cost = calculateCost(model, inputTokens, outputTokens, cacheRead, cacheWrite);
+          const ts = new Date(now - day * 86400000 + r * 60000).toISOString();
+          insertUsage.run(uuidv4(), eng.id, eng.team, ts, model, inputTokens, outputTokens, cacheRead, cacheWrite, cost);
+        }
+      }
+    }
+
+    logger.info(`Seeded demo data for ${engineers.length} engineers across 31 days`);
   }
 }
 

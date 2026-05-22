@@ -76,9 +76,7 @@ app.use("/proxy", (req: Request, _res: Response, next: NextFunction) => {
 });
 
 // ─── Proxy to Anthropic API ───────────────────────────────────────────────
-app.use(
-  "/proxy",
-  createProxyMiddleware({
+const proxyOpts: any = {
     target: "https://api.anthropic.com",
     changeOrigin: true,
     pathRewrite: { "^/proxy": "" },
@@ -143,7 +141,11 @@ app.use(
         res.status(502).json({ error: "Proxy error", detail: (err as Error).message });
       },
     },
-  })
+  };
+
+app.use(
+  "/proxy",
+  createProxyMiddleware(proxyOpts)
 );
 
 // ─── Start ─────────────────────────────────────────────────────────────────
