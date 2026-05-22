@@ -253,6 +253,14 @@ export default function Login({ onAuth }: { onAuth: () => void }) {
             ? "No account? Create one"
             : "Already have an account? Sign in"}
         </button>
+
+        <a href="/" style={{
+          display: "block", textAlign: "center" as const, marginTop: 20,
+          color: "#475569", fontSize: 11, textDecoration: "none",
+          fontFamily: "'IBM Plex Mono', monospace",
+        }}>
+          ← Back to Home
+        </a>
       </div>
     </div>
   );
