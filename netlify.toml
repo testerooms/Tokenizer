@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build --workspace=packages/shared && npm run build --workspace=packages/dashboard"
+  command = "npm install && npm run build --workspace=packages/shared && npm run build --workspace=packages/dashboard && mv packages/dashboard/dist/index.html packages/dashboard/dist/app.html"
   publish = "packages/dashboard/dist"
 
 [build.environment]
@@ -19,10 +19,10 @@
 
 [[redirects]]
   from = "/dashboard"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
 
 [[redirects]]
   from = "/dashboard/*"
-  to = "/index.html"
+  to = "/app.html"
   status = 200
