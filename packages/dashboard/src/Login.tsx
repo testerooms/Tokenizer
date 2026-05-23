@@ -140,6 +140,8 @@ export default function Login({ onAuth }: { onAuth: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [showReset, setShowReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -180,6 +182,88 @@ export default function Login({ onAuth }: { onAuth: () => void }) {
     }
   }
 
+  async function handleResetPassword(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/dashboard`,
+    });
+    setLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    setResetSent(true);
+  }
+
+  if (showReset) {
+    return (
+      <div style={styles.wrap}>
+        <div style={styles.box}>
+          <div style={styles.logo}>
+            <div style={styles.logoIcon}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div style={styles.title}>Tokenizer</div>
+          </div>
+          <div style={styles.subtitle}>RESET PASSWORD</div>
+
+          {resetSent ? (
+            <>
+              <div style={{ fontSize: 13, color: "#22c55e", textAlign: "center", margin: "20px 0", lineHeight: 1.7 }}>
+                Reset link sent! Check your email inbox.
+              </div>
+              <button
+                style={{ ...styles.btn, marginTop: 8 }}
+                onClick={() => { setShowReset(false); setResetSent(false); setEmail(""); }}
+              >
+                Back to Sign In
+              </button>
+            </>
+          ) : (
+            <form onSubmit={handleResetPassword}>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 20, lineHeight: 1.7, textAlign: "center" }}>
+                Enter your email and we'll send you a password reset link.
+              </div>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Email</label>
+                <input
+                  style={styles.input}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  required
+                />
+              </div>
+
+              {error && <div style={styles.error}>{error}</div>}
+
+              <button
+                style={{ ...styles.btn, ...(loading ? styles.btnDisabled : {}) }}
+                disabled={loading}
+                type="submit"
+              >
+                {loading ? "..." : "Send Reset Link"}
+              </button>
+
+              <button
+                style={styles.toggle}
+                onClick={() => { setShowReset(false); setError(""); }}
+                type="button"
+              >
+                ← Back to Sign In
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.wrap}>
       <div style={styles.box}>
@@ -217,6 +301,20 @@ export default function Login({ onAuth }: { onAuth: () => void }) {
             />
           </div>
 
+          <div style={{ textAlign: "right", marginBottom: 12 }}>
+            <button
+              type="button"
+              onClick={() => setShowReset(true)}
+              style={{
+                background: "none", border: "none",
+                color: "#6366f1", fontSize: 11, cursor: "pointer",
+                fontFamily: "'IBM Plex Mono', monospace", padding: 0,
+              }}
+            >
+              Forgot password?
+            </button>
+          </div>
+
           {error && <div style={styles.error}>{error}</div>}
 
           <button
@@ -248,6 +346,7 @@ export default function Login({ onAuth }: { onAuth: () => void }) {
         <button
           style={styles.toggle}
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          type="button"
         >
           {mode === "signin"
             ? "No account? Create one"
