@@ -1,0 +1,9 @@
+{
+  "nodeVersion": "20.x",
+  "installCommand": "npm install --ignore-scripts && npm run build --workspace=packages/shared",
+  "buildCommand": "npm run build --workspace=packages/dashboard",
+  "outputDirectory": "packages/dashboard/dist/dashboard",
+  "github": {
+    "silent": true
+  }
+}
