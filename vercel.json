@@ -1,9 +1,11 @@
 {
-  "nodeVersion": "20.x",
   "installCommand": "npm install --ignore-scripts && npm run build --workspace=packages/shared",
-  "buildCommand": "npm run build --workspace=packages/dashboard",
-  "outputDirectory": "packages/dashboard/dist/dashboard",
+  "buildCommand": "npm run build --workspace=packages/dashboard && cp index.html packages/dashboard/dist/",
+  "outputDirectory": "packages/dashboard/dist",
   "github": {
     "silent": true
-  }
+  },
+  "routes": [
+    { "src": "/dashboard/(.*)", "dest": "/dashboard/index.html" }
+  ]
 }
