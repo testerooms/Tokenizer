@@ -198,6 +198,27 @@ class GuardianDB {
     });
   }
 
+  createAlert(params: { engineerId?: string; teamId?: string; type: Alert["type"]; severity: Alert["severity"]; message: string }) {
+    this.db.prepare(`
+      INSERT INTO alerts (id, engineer_id, team_id, type, severity, message, timestamp, resolved)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+    `).run(uuidv4(), params.engineerId ?? null, params.teamId ?? null, params.type, params.severity, params.message, new Date().toISOString());
+  }
+
+  getTeamSpendThisMonth(teamId: string): number {
+    const result = this.db.prepare(`
+      SELECT COALESCE(SUM(cost_usd), 0) as total
+      FROM usage_records
+      WHERE team_id = ?
+        AND strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+    `).get(teamId) as any;
+    return result?.total ?? 0;
+  }
+
+  getEngineer(engineerId: string) {
+    return this.db.prepare("SELECT * FROM engineers WHERE id = ?").get(engineerId) as any;
+  }
+
   getAlerts(resolved = false): Alert[] {
     return this.db.prepare("SELECT * FROM alerts WHERE resolved = ? ORDER BY timestamp DESC LIMIT 100")
       .all(resolved ? 1 : 0) as Alert[];
