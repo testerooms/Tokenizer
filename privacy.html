@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tokenizer privacy policy — how we handle your data.">
+    <title>Privacy Policy — Tokenizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0b0e1a; --surface: #0f1628; --border: #1e2332;
+            --text: #e2e8f0; --muted: #64748b; --bright: #f8fafc;
+            --accent: #6366f1; --accent2: #8b5cf6;
+            --radius: 12px;
+        }
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1.7; -webkit-font-smoothing: antialiased;
+            padding: 3rem 2rem;
+        }
+        .container { max-width: 720px; margin: 0 auto; }
+        h1 { font-size: 1.75rem; font-weight: 700; color: var(--bright); margin-bottom: 2rem; letter-spacing: -0.02em; }
+        h2 { font-size: 1rem; font-weight: 600; color: var(--bright); margin-top: 2.5rem; margin-bottom: 0.75rem; }
+        p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.8; }
+        ul { margin: 0.5rem 0 1rem 1.5rem; }
+        li { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; line-height: 1.7; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .back { display: inline-block; margin-bottom: 2rem; font-size: 0.7rem; color: var(--accent); text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .last-updated { font-size: 0.65rem; color: #3b3f54; margin-top: -1rem; margin-bottom: 2rem; }
+        footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.65rem; color: #3b3f54; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back">← Back to Tokenizer</a>
+        <h1>Privacy Policy</h1>
+        <p class="last-updated">Last updated: May 25, 2026</p>
+
+        <h2>1. What We Collect</h2>
+        <p>Tokenizer is a self-hosted open-source proxy. When you run it on your infrastructure, it processes API requests routed through the proxy. The proxy logs the following metadata for budget tracking purposes:</p>
+        <ul>
+            <li>Engineer ID (provided via the <code>x-engineer-id</code> header)</li>
+            <li>Number of input/output tokens per request</li>
+            <li>Model name used for each request</li>
+            <li>Timestamp of each request</li>
+            <li>HTTP status code of the proxied response</li>
+        </ul>
+        <p>The proxy does <strong>not</strong> log, store, or transmit the content of any prompts, responses, or API request bodies. Token payloads are anonymized — we count tokens, we do not read them.</p>
+
+        <h2>2. Landing Page (tokenizer.sh)</h2>
+        <p>The marketing site hosted at tokenizer.sh uses <strong>Vercel Analytics</strong> for anonymous traffic measurement. This collects:</p>
+        <ul>
+            <li>Page views and referrer information</li>
+            <li>Browser type and device category</li>
+            <li>Geographic region (country-level only)</li>
+        </ul>
+        <p>No cookies are used for analytics. No personal identifiable information is collected. You can opt out by disabling JavaScript or using a browser extension.</p>
+
+        <h2>3. Data Storage</h2>
+        <p>All usage data is stored locally in a SQLite database on the machine running the proxy. No data is sent to external servers unless you explicitly configure an alert integration (e.g., Slack webhook). You retain full control over your data.</p>
+
+        <h2>4. Data Retention</h2>
+        <p>Usage logs are retained indefinitely by default. You can clear the database at any time by deleting the <code>guardian.db</code> file or running the appropriate SQL command. We recommend setting up a retention policy appropriate for your organization.</p>
+
+        <h2>5. Third-Party Services</h2>
+        <p>The proxy forwards API requests to Anthropic's API. Data sent to Anthropic is subject to <a href="https://www.anthropic.com/privacy" target="_blank">Anthropic's Privacy Policy</a>. No other third-party services receive data from the proxy.</p>
+
+        <h2>6. GDPR Compliance</h2>
+        <p>If you are processing data of individuals in the European Economic Area, you are the data controller and Tokenizer is a data processing tool. You are responsible for:</p>
+        <ul>
+            <li>Ensuring you have a lawful basis for processing</li>
+            <li>Implementing appropriate technical measures (the proxy is one such measure)</li>
+            <li>Responding to data subject access requests</li>
+        </ul>
+
+        <h2>7. Security</h2>
+        <p>The proxy does not expose data to the public internet by default. It is designed to run on internal networks. We recommend deploying behind a reverse proxy with authentication, TLS, and network access controls appropriate for your organization's security requirements.</p>
+
+        <h2>8. Changes</h2>
+        <p>We may update this policy as the project evolves. Changes will be posted here. Continued use after changes constitutes acceptance of the updated policy.</p>
+
+        <h2>9. Contact</h2>
+        <p>For questions about this policy, open an issue on <a href="https://github.com/testerooms/Tokenizer" target="_blank">GitHub</a>.</p>
+
+        <footer>Tokenizer — Open-source MIT License</footer>
+    </div>
+</body>
+</html>

@@ -3,7 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tokenizer — AI Spend Governance</title>
+    <meta name="description" content="Open-source API proxy + FinOps dashboard for Claude Code spend. Track usage, enforce budget caps, and stop surprise AI bills before they hit your bottom line.">
+    <title>Tokenizer — AI Spend Governance for Claude Code</title>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Tokenizer — AI Spend Governance for Claude Code">
+    <meta property="og:description" content="Open-source API proxy + FinOps dashboard that tracks usage, enforces budget caps, and blocks runaway AI spend before it hits your bottom line.">
+    <meta property="og:image" content="https://tokenizer.sh/og-image.png">
+    <meta property="og:url" content="https://tokenizer.sh">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tokenizer — AI Spend Governance for Claude Code">
+    <meta name="twitter:description" content="Open-source API proxy + FinOps dashboard that tracks usage, enforces budget caps, and blocks runaway AI spend.">
+    <meta name="twitter:image" content="https://tokenizer.sh/og-image.png">
+
+    <meta name="google-site-verification" content="PQsPqFK0Ss4N2KFHmz2pwrGvY0dVMYx4R0Mo7ban9IY" />
+    <meta name="msvalidate.01" content="4F32B768C1E77626F88AB7D07860EDF5" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="/_vercel/insights/script.js"></script>
@@ -493,10 +515,38 @@ claude
 </section>
 
 <footer>
-    <div class="container">Tokenizer — 2026</div>
+    <div class="container">
+        <div style="display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+            <a href="/privacy" style="color:#3b3f54;text-decoration:none;transition:color 0.2s;">Privacy Policy</a>
+            <a href="/terms" style="color:#3b3f54;text-decoration:none;transition:color 0.2s;">Terms of Service</a>
+            <a href="https://github.com/testerooms/Tokenizer" style="color:#3b3f54;text-decoration:none;transition:color 0.2s;">GitHub</a>
+        </div>
+        Tokenizer — 2026
+    </div>
 </footer>
 
+<div id="cookie-notice" style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:1rem 2rem;display:none;z-index:999;font-size:0.7rem;">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <span style="color:var(--muted);line-height:1.6;">
+            This site uses Vercel Analytics for anonymous traffic measurement. No personal data is collected.
+            By continuing, you accept this.
+        </span>
+        <button onclick="dismissCookieNotice()" style="background:var(--accent);color:var(--bright);border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-family:inherit;font-size:0.65rem;font-weight:600;text-transform:uppercase;white-space:nowrap;">Accept</button>
+    </div>
+</div>
+
 <script>
+// ─── Cookie Notice ───
+(function() {
+    if (!localStorage.getItem('cookie-notice-dismissed')) {
+        document.getElementById('cookie-notice').style.display = 'block';
+    }
+})();
+function dismissCookieNotice() {
+    localStorage.setItem('cookie-notice-dismissed', 'true');
+    document.getElementById('cookie-notice').style.display = 'none';
+}
+
 // ─── Scroll Reveal ───
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });

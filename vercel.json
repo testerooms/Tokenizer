@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install --ignore-scripts && npm run build --workspace=packages/shared",
-  "buildCommand": "npm run build --workspace=packages/dashboard && cp index.html packages/dashboard/dist/",
+  "buildCommand": "node scripts/generate-og-image.mjs && node scripts/generate-favicon.mjs && npm run build --workspace=packages/dashboard && cp index.html packages/dashboard/dist/ && cp privacy.html packages/dashboard/dist/ && cp terms.html packages/dashboard/dist/ && cp robots.txt packages/dashboard/dist/ && cp sitemap.xml packages/dashboard/dist/ && cp og-image.png packages/dashboard/dist/ && cp favicon.png packages/dashboard/dist/",
   "outputDirectory": "packages/dashboard/dist",
   "github": {
     "silent": true

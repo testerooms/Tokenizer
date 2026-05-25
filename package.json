@@ -8,6 +8,7 @@
     "dev": "concurrently \"npm run dev --workspace=packages/proxy\" \"npm run dev --workspace=packages/dashboard\"",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/proxy && npm run build --workspace=packages/dashboard",
     "start": "npm run start --workspace=packages/proxy",
+    "generate-assets": "node scripts/generate-og-image.mjs && node scripts/generate-favicon.mjs",
     "lint": "eslint packages/*/src --ext .ts,.tsx"
   },
   "devDependencies": {
