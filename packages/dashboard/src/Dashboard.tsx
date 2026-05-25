@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -6,7 +6,7 @@ import {
   AlertTriangle, Shield, DollarSign, Users, Ban, CheckCircle, Clock, Activity, WifiOff, BookOpen, Copy, Terminal,
 } from "lucide-react";
 import { supabase } from "./supabase";
-import { api, type Overview, type SpendSummary } from "./api";
+import { api, type Overview, type SpendSummary, type TeamSummary, type Alert } from "./api";
 import type { UserProfile } from "./auth";
 
 const STATUS_COLOR: Record<string, string> = {
@@ -49,10 +49,12 @@ function SpendBar({ pct, status }: { pct: number; status: string }) {
 }
 
 export default function Dashboard({ profile }: { profile: UserProfile }) {
-  type Tab = "overview" | "engineers" | "setup";
+  type Tab = "overview" | "engineers" | "teams" | "alerts" | "setup" | "account";
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
   const [engineers, setEngineers] = useState<SpendSummary[]>([]);
+  const [teams, setTeams] = useState<TeamSummary[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [proxyStatus, setProxyStatus] = useState<"checking" | "online" | "offline">("checking");
@@ -61,12 +63,16 @@ export default function Dashboard({ profile }: { profile: UserProfile }) {
     setLoading(true);
     setError(null);
     try {
-      const [ov, eng] = await Promise.all([
+      const [ov, eng, teamsData, alertsData] = await Promise.all([
         api.getOverview(),
         api.getEngineers(),
+        api.getTeams(),
+        api.getAlerts(),
       ]);
       setOverview(ov);
       setEngineers(eng);
+      setTeams(teamsData);
+      setAlerts(alertsData);
       setProxyStatus("online");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch data";
@@ -154,7 +160,7 @@ export default function Dashboard({ profile }: { profile: UserProfile }) {
 
       {/* Tabs */}
       <div style={{ padding: "0 32px", borderBottom: "1px solid #1e2332", display: "flex", gap: 0 }}>
-        {(["overview", ...(profile.role === "admin" ? (["engineers"] as Tab[]) : []), "setup"] as Tab[]).map((t) => (
+        {(["overview", ...(profile.role === "admin" ? (["engineers"] as Tab[]) : []), "teams", "alerts", "setup", "account"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             background: "none", border: "none", padding: "14px 20px",
             fontSize: 12, fontWeight: 600, letterSpacing: "0.06em",
@@ -164,6 +170,9 @@ export default function Dashboard({ profile }: { profile: UserProfile }) {
             display: "inline-flex", alignItems: "center", gap: 6,
           }}>
             {t === "setup" && <BookOpen size={12} />}
+            {t === "account" && <Shield size={12} />}
+            {t === "teams" && <Users size={12} />}
+            {t === "alerts" && <AlertTriangle size={12} />}
             {t}
           </button>
         ))}
@@ -171,13 +180,16 @@ export default function Dashboard({ profile }: { profile: UserProfile }) {
 
       <main style={{ padding: "32px" }}>
         {tab === "setup" && <SetupTab />}
-        {tab !== "setup" && loading && !overview && (
+        {tab === "account" && <AccountTab profile={profile} />}
+        {tab === "teams" && teams.length > 0 && <TeamsTab teams={teams} />}
+        {tab === "alerts" && <AlertsTab alerts={alerts} />}
+        {tab !== "setup" && tab !== "account" && tab !== "teams" && tab !== "alerts" && loading && !overview && (
           <div style={{ textAlign: "center", padding: "80px 20px", color: "#64748b", fontSize: 13 }}>
             <Activity size={24} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
             Loading dashboard data...
           </div>
         )}
-        {tab !== "setup" && error && !loading && (
+        {tab !== "setup" && tab !== "account" && tab !== "teams" && tab !== "alerts" && error && !loading && (
           <div style={{
             textAlign: "center", padding: "80px 20px", color: "#ef4444", fontSize: 13,
             background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12,
@@ -475,6 +487,238 @@ claude`,
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function AccountTab({ profile }: { profile: UserProfile }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  async function handleUpdatePassword(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
+    if (password !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    setLoading(true);
+    const { error: err } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    setSuccess(true);
+    setPassword("");
+    setConfirm("");
+  }
+
+  return (
+    <div style={{ maxWidth: 500, display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Profile info */}
+      <div style={{ background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, padding: 24 }}>
+        <div style={{ fontSize: 12, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 16 }}>
+          Profile
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "#64748b", letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>Email</div>
+            <div style={{ fontSize: 13, color: "#e2e8f0" }}>{profile.email}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "#64748b", letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>Role</div>
+            <span style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase",
+              color: profile.role === "admin" ? "#22c55e" : "#f59e0b",
+              background: profile.role === "admin" ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)",
+              padding: "2px 10px", borderRadius: 4,
+            }}>
+              {profile.role}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Password change */}
+      <div style={{ background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, padding: 24 }}>
+        <div style={{ fontSize: 12, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 16 }}>
+          Change Password
+        </div>
+        <form onSubmit={handleUpdatePassword}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: 10, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 6, textTransform: "uppercase" }}>
+              New Password
+            </label>
+            <input
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 8, boxSizing: "border-box",
+                background: "#0b0e1a", border: "1px solid #1e2332",
+                color: "#e2e8f0", fontSize: 13, outline: "none",
+                fontFamily: "'IBM Plex Mono', monospace",
+              }}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: 10, color: "#94a3b8", letterSpacing: "0.06em", marginBottom: 6, textTransform: "uppercase" }}>
+              Confirm New Password
+            </label>
+            <input
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 8, boxSizing: "border-box",
+                background: "#0b0e1a", border: "1px solid #1e2332",
+                color: "#e2e8f0", fontSize: 13, outline: "none",
+                fontFamily: "'IBM Plex Mono', monospace",
+              }}
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          {error && <div style={{ fontSize: 11, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+          {success && <div style={{ fontSize: 11, color: "#22c55e", marginBottom: 12 }}>Password updated successfully!</div>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: "10px 20px", borderRadius: 8, border: "none",
+              background: loading ? "#1e2332" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              color: loading ? "#64748b" : "white", fontSize: 12, fontWeight: 700,
+              cursor: loading ? "default" : "pointer", letterSpacing: "0.04em",
+              fontFamily: "'IBM Plex Mono', monospace",
+            }}
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function TeamsTab({ teams }: { teams: TeamSummary[] }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ fontSize: 12, color: "#64748b", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        {teams.length} Teams
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+        {teams.map((t) => {
+          const teamColor = t.status === "exhausted" ? "#ef4444" : t.status === "critical" ? "#f59e0b" : t.status === "warning" ? "#f59e0b" : "#22c55e";
+          return (
+            <div key={t.teamId} style={{
+              background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, padding: 20,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#f8fafc", marginBottom: 2 }}>{t.teamId}</div>
+                  <div style={{ fontSize: 10, color: "#64748b", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    {t.engineerCount} engineers ({t.activeEngineers} active)
+                  </div>
+                </div>
+                <div style={{
+                  padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700,
+                  letterSpacing: "0.05em", textTransform: "uppercase",
+                  background: `${teamColor}18`,
+                  color: teamColor,
+                  border: `1px solid ${teamColor}40`,
+                }}>
+                  {t.status}
+                </div>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 6 }}>
+                  <span style={{ color: "#94a3b8" }}>Spend</span>
+                  <span style={{ color: "#f8fafc", fontWeight: 700 }}>${t.spentUSD.toFixed(2)} / ${t.monthlyCapUSD.toFixed(2)}</span>
+                </div>
+                <div style={{ background: "#1e2332", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%", width: `${Math.min(t.utilizationPct, 100)}%`,
+                    background: teamColor, borderRadius: 4,
+                    transition: "width 0.6s cubic-bezier(.4,0,.2,1)",
+                    boxShadow: `0 0 8px ${teamColor}60`,
+                  }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b" }}>
+                <span>Remaining</span>
+                <span style={{ color: t.remainingUSD > 0 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>
+                  ${t.remainingUSD.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AlertsTab({ alerts }: { alerts: Alert[] }) {
+  const severityColor = (s: string) => s === "critical" ? "#ef4444" : s === "warning" ? "#f59e0b" : "#64748b";
+  const typeLabel = (t: string) => t === "soft_limit" ? "Soft Limit" : t === "hard_limit" ? "Hard Limit" : t === "team_budget" ? "Team Budget" : t;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ fontSize: 12, color: "#64748b", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        {alerts.length} Alerts
+      </div>
+      {alerts.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b", fontSize: 13, background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12 }}>
+          <CheckCircle size={24} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
+          No alerts. All clear.
+        </div>
+      ) : (
+        <div style={{ background: "#0f1628", border: "1px solid #1e2332", borderRadius: 12, overflow: "hidden" }}>
+          <div style={{
+            display: "grid", gridTemplateColumns: "auto 1fr auto",
+            padding: "12px 20px", borderBottom: "1px solid #1e2332",
+            fontSize: 10, color: "#475569", letterSpacing: "0.08em", textTransform: "uppercase",
+          }}>
+            <span style={{ minWidth: 80 }}>Type</span>
+            <span>Message</span>
+            <span style={{ minWidth: 140, textAlign: "right" }}>Time</span>
+          </div>
+          {alerts.map((a) => (
+            <div key={a.id} style={{
+              display: "grid", gridTemplateColumns: "auto 1fr auto",
+              padding: "12px 20px", borderBottom: "1px solid #1e2332", alignItems: "center", gap: 12,
+              fontSize: 12,
+            }}>
+              <div style={{
+                padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 600,
+                letterSpacing: "0.04em", whiteSpace: "nowrap",
+                background: `${severityColor(a.severity)}18`,
+                color: severityColor(a.severity),
+                border: `1px solid ${severityColor(a.severity)}40`,
+              }}>
+                {typeLabel(a.type)}
+              </div>
+              <div style={{ color: "#e2e8f0" }}>{a.message}</div>
+              <div style={{ fontSize: 11, color: "#64748b", textAlign: "right", whiteSpace: "nowrap" }}>
+                {new Date(a.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

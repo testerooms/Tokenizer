@@ -1,7 +1,10 @@
 const BASE_URL = import.meta.env.VITE_PROXY_API_URL || "http://localhost:3001";
+const API_KEY = import.meta.env.VITE_ADMIN_API_KEY || "";
 
 async function fetchJSON<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`);
+  const headers: Record<string, string> = {};
+  if (API_KEY) headers["x-api-key"] = API_KEY;
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`API ${res.status}: ${body}`);

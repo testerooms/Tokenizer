@@ -6,5 +6,10 @@ logs/
 *.db
 .DS_Store
 
+# Generated assets
+og-image.png
+favicon.png
+
 # Local Netlify folder
 .netlify
+.vercel

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tokenizer terms of service — terms for using the Tokenizer open-source software.">
+    <title>Terms of Service — Tokenizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0b0e1a; --surface: #0f1628; --border: #1e2332;
+            --text: #e2e8f0; --muted: #64748b; --bright: #f8fafc;
+            --accent: #6366f1; --accent2: #8b5cf6;
+            --radius: 12px;
+        }
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1.7; -webkit-font-smoothing: antialiased;
+            padding: 3rem 2rem;
+        }
+        .container { max-width: 720px; margin: 0 auto; }
+        h1 { font-size: 1.75rem; font-weight: 700; color: var(--bright); margin-bottom: 2rem; letter-spacing: -0.02em; }
+        h2 { font-size: 1rem; font-weight: 600; color: var(--bright); margin-top: 2.5rem; margin-bottom: 0.75rem; }
+        p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.8; }
+        ul { margin: 0.5rem 0 1rem 1.5rem; }
+        li { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; line-height: 1.7; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .back { display: inline-block; margin-bottom: 2rem; font-size: 0.7rem; color: var(--accent); text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+        .last-updated { font-size: 0.65rem; color: #3b3f54; margin-top: -1rem; margin-bottom: 2rem; }
+        .notice { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.5rem 0; font-size: 0.75rem; color: var(--muted); line-height: 1.7; }
+        footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.65rem; color: #3b3f54; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back">← Back to Tokenizer</a>
+        <h1>Terms of Service</h1>
+        <p class="last-updated">Last updated: May 25, 2026</p>
+
+        <div class="notice">
+            <strong>Tokenizer is open-source software</strong> released under the MIT License. These terms apply to the hosted marketing site (tokenizer.sh) and the software distributed via GitHub.
+        </div>
+
+        <h2>1. Software License</h2>
+        <p>Tokenizer is distributed under the <strong>MIT License</strong>. You are free to use, modify, and distribute the software subject to the terms of that license. A copy of the MIT License is included in the <a href="https://github.com/testerooms/Tokenizer" target="_blank">GitHub repository</a>.</p>
+
+        <h2>2. No Warranty</h2>
+        <p>Tokenizer is provided "as is", without warranty of any kind, express or implied. The authors and contributors are not liable for any claims, damages, or other liability arising from the use of the software.</p>
+
+        <h2>3. Usage of tokenizer.sh</h2>
+        <p>The marketing website at tokenizer.sh provides information about the open-source project. You may browse it freely. We do not collect personal data beyond anonymous analytics (see <a href="/privacy">Privacy Policy</a>).</p>
+
+        <h2>4. Self-Hosted Responsibility</h2>
+        <p>Tokenizer is designed to be self-hosted on your own infrastructure. You are responsible for:</p>
+        <ul>
+            <li>Securing your deployment (network access, authentication, TLS)</li>
+            <li>Managing your Anthropic API keys and associated costs</li>
+            <li>Complying with all applicable laws and regulations</li>
+            <li>Ensuring your use of Anthropic's API complies with their terms of service</li>
+        </ul>
+
+        <h2>5. API Usage</h2>
+        <p>The proxy forwards requests to Anthropic's API. Anthropic's <a href="https://www.anthropic.com/terms" target="_blank">Terms of Service</a> and <a href="https://www.anthropic.com/privacy" target="_blank">Privacy Policy</a> apply to all forwarded requests. You must ensure your engineers' usage complies with those terms.</p>
+
+        <h2>6. Limitation of Liability</h2>
+        <p>In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in contract, tort, or otherwise, arising from the use of the software.</p>
+
+        <h2>7. Changes</h2>
+        <p>These terms may be updated as the project evolves. Changes will be posted on this page. Continued use after changes constitutes acceptance of the updated terms.</p>
+
+        <footer>Tokenizer — Open-source MIT License</footer>
+    </div>
+</body>
+</html>

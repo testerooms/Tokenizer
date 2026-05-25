@@ -80,14 +80,6 @@ class GuardianDB {
       .prepare("SELECT * FROM engineers WHERE id = ?")
       .get(params.engineerId) as any;
 
-    if (!engineer) {
-      // Auto-register unknown engineers
-      this.db.prepare(`
-        INSERT OR IGNORE INTO engineers (id, email, name, team_id, tier)
-        VALUES (?, ?, ?, 'default', 'standard')
-      `).run(params.engineerId, `${params.engineerId}@company.com`, params.engineerId);
-    }
-
     const cost = calculateCost(
       params.model,
       params.inputTokens,
@@ -120,6 +112,11 @@ class GuardianDB {
     );
 
     return record;
+  }
+
+  engineerExists(engineerId: string): boolean {
+    const result = this.db.prepare("SELECT 1 FROM engineers WHERE id = ?").get(engineerId);
+    return !!result;
   }
 
   getEngineerSpendThisMonth(engineerId: string): number {
@@ -199,6 +196,27 @@ class GuardianDB {
         status: spent >= cap ? "exhausted" : spent >= cap * 0.95 ? "critical" : spent >= cap * 0.8 ? "warning" : "ok",
       } as TeamSummary;
     });
+  }
+
+  createAlert(params: { engineerId?: string; teamId?: string; type: Alert["type"]; severity: Alert["severity"]; message: string }) {
+    this.db.prepare(`
+      INSERT INTO alerts (id, engineer_id, team_id, type, severity, message, timestamp, resolved)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+    `).run(uuidv4(), params.engineerId ?? null, params.teamId ?? null, params.type, params.severity, params.message, new Date().toISOString());
+  }
+
+  getTeamSpendThisMonth(teamId: string): number {
+    const result = this.db.prepare(`
+      SELECT COALESCE(SUM(cost_usd), 0) as total
+      FROM usage_records
+      WHERE team_id = ?
+        AND strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+    `).get(teamId) as any;
+    return result?.total ?? 0;
+  }
+
+  getEngineer(engineerId: string) {
+    return this.db.prepare("SELECT * FROM engineers WHERE id = ?").get(engineerId) as any;
   }
 
   getAlerts(resolved = false): Alert[] {

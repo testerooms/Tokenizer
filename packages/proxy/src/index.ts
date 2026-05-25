@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { db } from "./db";
@@ -13,8 +14,34 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://localhost:3000,https://claude-cost-guardian.vercel.app")
+  .split(",").map(s => s.trim());
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(null, false);
+  },
+}));
+app.use(helmet({
+  hidePoweredBy: true,
+  frameguard: { action: "deny" },
+  xssFilter: true,
+  noSniff: true,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+}));
 app.use(express.json({ limit: "10mb" }));
+
+const API_KEY = process.env.ADMIN_API_KEY;
+
+function requireApiKey(req: Request, res: Response, next: NextFunction) {
+  if (!API_KEY) return next();
+  const key = req.headers["x-api-key"] as string;
+  if (!key || key !== API_KEY) {
+    return res.status(401).json({ error: "Missing or invalid API key. Provide x-api-key header." });
+  }
+  next();
+}
 
 // ─── Root ────────────────────────────────────────────────────────────────────
 app.get("/", (_req, res) => res.json({ service: "Tokenizer Proxy", status: "running", docs: "/health" }));
@@ -23,8 +50,8 @@ app.get("/", (_req, res) => res.json({ service: "Tokenizer Proxy", status: "runn
 app.get("/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
 
 // ─── Internal API for dashboard ───────────────────────────────────────────
-app.use("/api/metrics", metricsRouter);
-app.use("/api/alerts", alertsRouter);
+app.use("/api/metrics", requireApiKey, metricsRouter);
+app.use("/api/alerts", requireApiKey, alertsRouter);
 
 // ─── Middleware: Authenticate engineer ────────────────────────────────────
 app.use("/proxy", (req: Request, res: Response, next: NextFunction) => {
@@ -39,6 +66,12 @@ app.use("/proxy", (req: Request, res: Response, next: NextFunction) => {
 
   if (!apiKey?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing or invalid Authorization header." });
+  }
+
+  if (!db.engineerExists(engineerId)) {
+    return res.status(403).json({
+      error: `Unknown engineer ID: ${engineerId}. Contact your admin to get registered.`,
+    });
   }
 
   (req as any).engineerId = engineerId;
